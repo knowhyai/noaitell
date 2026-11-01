@@ -1,0 +1,13 @@
+{
+  "name": "noaitell-extension",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "icons": "node scripts/gen-icons.mjs",
+    "typecheck": "tsc --noEmit",
+    "test": "npm run typecheck && node scripts/smoke.mjs"
+  },
+  "devDependencies": { "esbuild": "^0.25.0", "typescript": "^5.7.2" }
+}
