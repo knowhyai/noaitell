@@ -18,7 +18,7 @@
     rule("EN10", "en", "medium", "元话语填充可删减或改为具体事实。", rx(/^\s*(?:it(?:'s| is)\s+(?:important|worth|crucial|essential)\s+to\s+(?:note|remember|mention|highlight)|it should be noted that)\b/i, "Meta filler"), true, [{ text: "It's important to note that results may vary.", matches: true }, { text: "Results vary.", matches: false }]),
     rule("ZH01", "zh", "medium", "“不仅—更是”双标记是常见的升级对偶。", rx(/(?:不仅|不但)[^。！？]{1,40}?(?:更|更是|而且|还)/, "不仅—更是"), true, [{ text: "这不仅提高了效率，更改变了团队协作的方式。", matches: true }, { text: "不仅提高了效率。", matches: false }]),
     rule("ZH02", "zh", "medium", "“不是—而是”结构值得确认是否需要保留。", rx(/不是[^。！？]{1,50}?而是/, "不是—而是"), true, [{ text: "真正重要的不是效率，而是价值。", matches: true }, { text: "这不是效率问题。", matches: false }]),
-    rule("ZH04", "zh", "medium", "时代背景套壳可改为具体背景或数据。", rx(/^\s*(?:在(?:当今|如今|当下)[^。！？]{0,35}?(?:的)?(?:时代|社会|背景|环境)(?:下)?|随着[^。！？]{1,35}?(?:不断|日益|快速|持续)(?:发展|普及|进步))/, "时代背景套壳"), true, [{ text: "随着人工智能的不断发展，内容创作正在被重塑。", matches: true }, { text: "在当今数字化时代，内容创作正在被重塑。", matches: true }, { text: "2024年随着市场发展，销量上升。", matches: false }]),
+    rule("ZH04", "zh", "medium", "时代背景套壳可改为具体背景或数据。", rx(/(?<![^，,；;\s])(?:在(?:当今|如今|当下)[^，,。！？]{0,35}?(?:的)?(?:时代|社会|背景|环境)(?:下)?|随着[^，,。！？]{1,35}?(?:不断|日益|快速|持续)(?:发展|普及|进步))/, "时代背景套壳"), true, [{ text: "随着人工智能的不断发展，内容创作正在被重塑。", matches: true }, { text: "在当今数字化时代，内容创作正在被重塑。", matches: true }, { text: "2024年随着市场发展，销量上升。", matches: false }]),
     rule("ZH05", "zh", "medium", "空泛强调开场应由具体证据支撑。", rx(/(?:值得注意的是|需要指出的是|值得一提的是|不容忽视的是|不可否认|毋庸置疑)[，,]?/, "空泛强调"), true, [{ text: "值得注意的是，这一趋势具有深远意义。", matches: true }, { text: "数据显示，值得注意的是趋势上升。", matches: true }, { text: "数据显示，趋势上升。", matches: false }]),
     rule("ZH06", "zh", "medium", "机械收束语仅在末段值得人工复核。", rx(/^\s*(?:综上所述|总而言之|总的来看|不难发现)(?:[，,]|\s|$)/, "机械收束"), true, [{ text: "综上所述，我们应积极拥抱变化。", matches: true }, { text: "总而言之的定义很有趣。", matches: false }]),
     // Experimental data stays shipped but disabled.
@@ -36,130 +36,381 @@
     rule("ZH09", "zh", "medium", "黑话/官样词。", rx(/(?:赋能|抓手|闭环|颗粒度|拉通|沉淀|打法|组合拳|致力于打造|深度融合)/, "黑话词"), false, [{ text: "通过数据赋能业务，形成增长闭环。", matches: true }, { text: "通过数据帮助业务。", matches: false }])
   ];
 
+  // ../web/src/engine/links.ts
+  function markdownLinks(text) {
+    const links = [];
+    const opening = /\[((?:\\.|[^\]\\\n])*)\]\(/g;
+    let match;
+    while (match = opening.exec(text)) {
+      const urlStart = opening.lastIndex;
+      let depth = 1, end = urlStart;
+      for (; end < text.length; end++) {
+        const char = text[end];
+        if (char === "\n" || /\s/.test(char)) break;
+        if (char === "\\") {
+          end++;
+          continue;
+        }
+        if (char === "(") depth++;
+        if (char === ")") {
+          depth--;
+          if (depth === 0) break;
+        }
+      }
+      if (depth !== 0) continue;
+      links.push({ start: match.index, end: end + 1, label: match[1], url: text.slice(urlStart, end), urlStart, urlEnd: end });
+      opening.lastIndex = end + 1;
+    }
+    return links;
+  }
+  var isTrackingKey = (key) => /^utm_/i.test(key) || ["fbclid", "gclid"].includes(key.toLowerCase());
+  function trackingKeys(url) {
+    try {
+      if (!/^https?:\/\//i.test(url)) return [];
+      return [...new URL(url).searchParams.keys()].filter(isTrackingKey);
+    } catch {
+      return [];
+    }
+  }
+  function stripTracking(url) {
+    if (!trackingKeys(url).length) return url;
+    const queryStart = url.indexOf("?");
+    const hashStart = url.indexOf("#", queryStart);
+    const queryEnd = hashStart < 0 ? url.length : hashStart;
+    const query = url.slice(queryStart + 1, queryEnd).split("&").filter((part) => {
+      const key = new URLSearchParams(part).keys().next().value;
+      return key === void 0 || !isTrackingKey(key);
+    }).join("&");
+    return url.slice(0, queryStart) + (query ? `?${query}` : "") + url.slice(queryEnd);
+  }
+  function bareUrlRanges(text) {
+    const ranges = [];
+    const url = /(?:https?:\/\/|www\.)[^\s<>"`]+|\b(?:[a-z\d-]+\.)+[a-z]{2,}(?:[/?#][^\s<>"`]*)?/gi;
+    for (const match of text.matchAll(url)) {
+      const value = match[0].replace(/[.!?。！？,;:]+$/, "");
+      ranges.push({ start: match.index, end: match.index + value.length });
+    }
+    return ranges;
+  }
+
   // ../web/src/engine/segments.ts
-  var detectLanguage = (s) => /[\u3400-\u9fff]/.test(s) ? "zh" : "en";
+  function detectLanguage(text) {
+    const chinese = text.match(/[\u3400-\u9fff]/g)?.length || 0;
+    const latin = text.match(new RegExp("\\p{Script=Latin}", "gu"))?.length || 0;
+    return chinese > latin ? "zh" : "en";
+  }
   function segment(text) {
     const parts = [];
-    const re = /```[\s\S]*?```|`[^`\n]+`|^>.*$|\[[^\]]*\]\([^)]*\)/gm;
-    let at = 0;
-    let m;
-    const push = (start, end, excluded = false, kind) => {
+    const links = markdownLinks(text);
+    const opening = /^ {0,3}(?:`{3,}|~{3,})[^\n]*$|^ {0,3}>[^\n]*$|`+|\[/gm;
+    let at = 0, match;
+    const push = (start, end, excluded = false, kind, codeStyle) => {
       if (end > start) {
         const value = text.slice(start, end);
-        parts.push({ start, end, text: value, language: detectLanguage(value), excluded, kind });
+        parts.push({ start, end, text: value, language: detectLanguage(value), excluded, kind, codeStyle });
       }
     };
-    while (m = re.exec(text)) {
-      push(at, m.index);
-      const kind = m[0].startsWith(">") ? "quote" : m[0].startsWith("[") ? "link" : "code";
-      push(m.index, m.index + m[0].length, true, kind);
-      at = m.index + m[0].length;
+    while (match = opening.exec(text)) {
+      const start = match.index;
+      let end = opening.lastIndex, kind, codeStyle;
+      const fence = /^ {0,3}(`{3,}|~{3,})/.exec(match[0]);
+      if (fence) {
+        const closing = new RegExp(`^ {0,3}${fence[1][0]}{${fence[1].length},}[ \\t]*\\r?$`, "gm");
+        closing.lastIndex = end;
+        const close = closing.exec(text);
+        end = close ? close.index + close[0].length : text.length;
+        kind = "code";
+        codeStyle = "fenced";
+      } else if (/^ {0,3}>/.test(match[0])) {
+        kind = "quote";
+      } else if (match[0][0] === "`") {
+        const closing = /`+/g;
+        closing.lastIndex = end;
+        let close;
+        while ((close = closing.exec(text)) && close[0].length !== match[0].length) {
+        }
+        if (!close || text.slice(end, close.index).includes("\n")) continue;
+        end = close.index + close[0].length;
+        kind = "code";
+        codeStyle = "inline";
+      } else {
+        const link = links.find((link2) => link2.start === start);
+        if (!link) continue;
+        end = link.end;
+        kind = "link";
+      }
+      push(at, start);
+      push(start, end, true, kind, codeStyle);
+      at = end;
+      opening.lastIndex = end;
     }
     push(at, text.length);
     return parts;
   }
-  function sentences(segmentText, offset) {
+  function sentences(text, offset) {
     const result2 = [];
-    const re = /[^.!?。！？\n]+[.!?。！？]?/g;
-    let m;
-    while (m = re.exec(segmentText)) if (m[0].trim()) result2.push({ text: m[0], start: offset + m.index, language: detectLanguage(m[0]) });
+    const urls = bareUrlRanges(text);
+    let start = 0;
+    const push = (end) => {
+      const value = text.slice(start, end);
+      if (value.trim()) result2.push({ text: value, start: offset + start, language: detectLanguage(value) });
+      start = end;
+    };
+    for (let i = 0; i < text.length; i++) {
+      const char = text[i];
+      if (char === "\n") {
+        push(i + 1);
+        continue;
+      }
+      if (!/[.!?。！？]/.test(char)) continue;
+      if (char === "." && /\d/.test(text[i - 1] || "") && /\d/.test(text[i + 1] || "")) continue;
+      if (urls.some((url) => i >= url.start && i < url.end)) continue;
+      while (/["'”’」』）)]/.test(text[i + 1] || "\0")) i++;
+      push(i + 1);
+    }
+    push(text.length);
     return result2;
   }
 
-  // ../web/src/engine/detect.ts
-  var make = (ruleId, category, confidence, start, end, text, label, why, cleanable) => ({ id: `${ruleId}:${start}:${end}`, ruleId, category, confidence, start, end, text, label, why, cleanable });
-  var invisible = /[\u200B\u2060\u00AD\uFEFF\u200E\u200F\u202A-\u202E\u2066-\u2069\u00A0\u202F]/g;
-  var spaceLike = /[\u00A0\u202F]/g;
-  var isEmojiJoiner = (text, i) => {
-    const before = [...text.slice(0, i)].at(-1) || "";
-    const after = [...text.slice(i + 1)][0] || "";
-    return new RegExp("\\p{Extended_Pictographic}", "u").test(before) && new RegExp("\\p{Extended_Pictographic}", "u").test(after);
+  // ../web/src/engine/characters.ts
+  var invisible = /[\u200B\u2060\u00AD\uFEFF\u200E\u200F\u202A-\u202E\u2066-\u2069\u200C\u200D\u00A0\u202F\u2000-\u200A\u3000]/g;
+  function meaningfulJoiner(text, index) {
+    const before = [...text.slice(0, index)];
+    const after = [...text.slice(index + 1)];
+    const modifier = /[\p{M}\p{Emoji_Modifier}]/u;
+    while (before.length && modifier.test(before.at(-1))) before.pop();
+    while (after.length && modifier.test(after[0])) after.shift();
+    const neighbor = /[\p{L}\p{Extended_Pictographic}\p{S}]/u;
+    return neighbor.test(before.at(-1) || "") && neighbor.test(after[0] || "");
+  }
+  function emojiSafeInvisible(text) {
+    return text.replace(invisible, (char, index) => {
+      if ((char === "‌" || char === "‍") && meaningfulJoiner(text, index)) return char;
+      return /^[\u00A0\u202F\u2000-\u200A\u3000]$/.test(char) ? " " : "";
+    });
+  }
+  function mixedWord(word) {
+    return [new RegExp("\\p{Script=Latin}", "u"), new RegExp("\\p{Script=Cyrillic}", "u"), new RegExp("\\p{Script=Greek}", "u")].filter((script) => script.test(word)).length > 1;
+  }
+  var homoglyphs = {
+    А: "A",
+    В: "B",
+    Е: "E",
+    І: "I",
+    К: "K",
+    М: "M",
+    Н: "H",
+    О: "O",
+    Р: "P",
+    С: "C",
+    Т: "T",
+    Х: "X",
+    а: "a",
+    Ь: "b",
+    с: "c",
+    һ: "h",
+    е: "e",
+    і: "i",
+    ј: "j",
+    о: "o",
+    р: "p",
+    ѕ: "s",
+    х: "x",
+    у: "y"
   };
+  function normaliseHomoglyph(word) {
+    return mixedWord(word) ? [...word].map((char) => homoglyphs[char] || char).join("") : word;
+  }
+  var normalizePunctuation = (text) => text.replace(/[“”]/g, '"').replace(/[‘’]/g, "'").replace(/…/g, "...").replace(/[—–]/g, "-");
+  var mathematical = (text) => !new RegExp("\\p{L}", "u").test(text) && /[\p{N}\p{Sm}]/u.test(text);
+
+  // ../web/src/engine/detect.ts
+  var make = (ruleId, category, confidence, start, end, text, label, why, cleanable) => ({
+    id: `${ruleId}:${start}:${end}`,
+    ruleId,
+    category,
+    confidence,
+    start,
+    end,
+    text,
+    label,
+    why,
+    cleanable
+  });
   function deterministic(text, excluded) {
     const out = [];
-    const blocked = (n) => excluded.some((x) => n >= x.start && n < x.end);
-    let m;
-    while (m = invisible.exec(text)) if (!blocked(m.index)) out.push(make("CHAR01", "typography", "high", m.index, m.index + m[0].length, m[0], "不可见或特殊空白", "不可见字符会干扰复制、搜索或排版；清理时会保留 emoji 组合所需连接符。", true));
-    const markdown = [[/^#{1,6}\s+.+/gm, "Markdown heading"], [/\*\*[^*]+\*\*/g, "Markdown bold"], [/^\s*(?:[-*+]\s+|\d+\.\s+)/gm, "Markdown list"], [/`[^`\n]+`/g, "Inline code"], [/^>\s+.+/gm, "Quote marker"]];
-    for (const [re, label] of markdown) {
-      while (m = re.exec(text)) if (!blocked(m.index)) out.push(make("MD01", "format", "high", m.index, m.index + m[0].length, m[0], label, "可见 Markdown 标记可按输出模式清理。", true));
+    const blocked = (start, end = start + 1, allowLink = false) => excluded.some((x) => (!allowLink || x.kind !== "link") && start < x.end && end > x.start);
+    for (const match of text.matchAll(invisible)) {
+      const char = match[0], start = match.index;
+      if (blocked(start)) continue;
+      if ((char === "‌" || char === "‍") && meaningfulJoiner(text, start)) continue;
+      out.push(make("CHAR01", "typography", "high", start, start + char.length, char, "不可见或特殊空白", "不可见字符会干扰复制、搜索或排版；保留字母或图形组合所需连接符。", true));
     }
-    const link = /\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g;
-    while (m = link.exec(text)) {
-      try {
-        const u = new URL(m[2]);
-        const tracked = [...u.searchParams.keys()].filter((k) => /^utm_/i.test(k) || ["fbclid", "gclid"].includes(k.toLowerCase()));
-        if (tracked.length) out.push(make("LINK01", "link", "high", m.index, m.index + m[0].length, m[0], "Tracking parameters", `链接含 ${tracked.join(", ")}；只会移除已知跟踪参数。`, true));
-      } catch {
+    const markdown = [
+      [/^ {0,3}#{1,6}[ \t]+.+/gm, "Markdown heading"],
+      [/\*\*[^*\n]+\*\*/g, "Markdown bold"],
+      [/^[ \t]*(?:[-*+][ \t]+|\d+\.[ \t]+)/gm, "Markdown list"]
+    ];
+    for (const [re, label] of markdown) {
+      for (const match of text.matchAll(re)) {
+        const start = match.index, end = start + match[0].length;
+        if (blocked(start)) continue;
+        const lineEnd = text.indexOf("\n", end);
+        if (label === "Markdown list" && mathematical(text.slice(end, lineEnd < 0 ? text.length : lineEnd))) continue;
+        out.push(make("MD01", "format", "high", start, end, match[0], label, "可见 Markdown 标记可按输出模式清理。", true));
       }
     }
-    const cite = /\[\d+\]|【†[^】]+】/g;
-    while (m = cite.exec(text)) if (!blocked(m.index)) out.push(make("CITE01", "link", "medium", m.index, m.index + m[0].length, m[0], "Citation marker", "引用标记可能是合法来源，因此只提示、从不自动删除。", false));
-    const spaces = /(?: {2,}|\t+|[ \t]+$|\n{3,})/gm;
-    while (m = spaces.exec(text)) if (!blocked(m.index)) out.push(make("WS01", "format", "high", m.index, m.index + m[0].length, m[0], "Extra whitespace", "多余空白可安全合并。", true));
-    const word = /[\p{L}]{2,}/gu;
-    while (m = word.exec(text)) {
-      const s = m[0];
-      const scripts = [new RegExp("\\p{Script=Latin}", "u").test(s), new RegExp("\\p{Script=Cyrillic}", "u").test(s), new RegExp("\\p{Script=Greek}", "u").test(s)].filter(Boolean).length;
-      if (scripts > 1) out.push(make("CHAR02", "typography", "high", m.index, m.index + s.length, s, "Mixed-script homoglyph", "同一单词混入外观相似的不同文字，可能造成误读或欺骗。", true));
+    for (const link of markdownLinks(text)) {
+      if (blocked(link.start, link.end, true)) continue;
+      const tracked = trackingKeys(link.url);
+      if (tracked.length) out.push(make("LINK01", "link", "high", link.start, link.end, text.slice(link.start, link.end), "Tracking parameters", `链接含 ${tracked.join(", ")}；只会移除已知跟踪参数。`, true));
     }
-    const english = text.match(/[A-Za-z]/g)?.length || 0, chinese = text.match(/[\u4e00-\u9fff]/g)?.length || 0;
-    if (english > chinese) {
-      const punct = /[—–“”‘’…]/g;
-      while (m = punct.exec(text)) if (!blocked(m.index)) out.push(make("PUNC01", "typography", "medium", m.index, m.index + 1, m[0], "Typography character", "英文发布时可按需统一为直引号、连字符或三个点。", true));
+    for (const match of text.matchAll(/\[\d+\]|【†[^】]+】/g)) {
+      if (!blocked(match.index)) out.push(make("CITE01", "link", "medium", match.index, match.index + match[0].length, match[0], "Citation marker", "引用标记可能是合法来源，因此只提示、从不自动删除。", false));
+    }
+    for (const match of text.matchAll(/(?:[ \t]+$|[ \t]{2,}|\t+|\n{3,})/gm)) {
+      const start = match.index, end = start + match[0].length;
+      if (blocked(start, end)) continue;
+      const lineStart = text.lastIndexOf("\n", start - 1) + 1;
+      if (!match[0].includes("\n") && /^[ \t]*$/.test(text.slice(lineStart, start)) && end < text.length && text[end] !== "\n") continue;
+      out.push(make("WS01", "format", "high", start, end, match[0], "Extra whitespace", "多余空白可安全合并，保留行首缩进。", true));
+    }
+    for (const match of text.matchAll(/[\p{L}\p{M}]{2,}/gu)) {
+      const start = match.index, end = start + match[0].length;
+      if (!blocked(start, end) && mixedWord(match[0])) out.push(make("CHAR02", "typography", "high", start, end, match[0], "Mixed-script homoglyph", "同一单词混入外观相似的不同文字，可能造成误读或欺骗。", true));
+    }
+    let body = "", at = 0;
+    for (const part of excluded) {
+      body += text.slice(at, part.start) + text.slice(part.start, part.end).replace(/[^\n]/g, " ");
+      at = part.end;
+    }
+    body += text.slice(at);
+    for (const sentence of sentences(body, 0)) {
+      if (sentence.language !== "en") continue;
+      for (const match of sentence.text.matchAll(/[—–“”‘’…]/g)) {
+        const start = sentence.start + match.index;
+        if (!blocked(start)) out.push(make("PUNC01", "typography", "medium", start, start + 1, match[0], "Typography character", "英文发布时可按需统一为直引号、连字符或三个点。", true));
+      }
     }
     return out;
   }
   function analyze(text, ignored2 = /* @__PURE__ */ new Set()) {
     const segs = segment(text);
-    const excluded = segs.filter((x) => x.excluded).map((x) => ({ start: x.start, end: x.end }));
+    const excluded = segs.filter((s) => s.excluded);
     const found = deterministic(text, excluded);
-    for (const s of segs.filter((x) => !x.excluded)) for (const sentence of sentences(s.text, s.start)) for (const r of rules.filter((r2) => r2.enabled && r2.language === sentence.language)) for (const hit of r.matcher(sentence.text)) {
-      const start = sentence.start + hit.start, end = sentence.start + hit.end;
-      if (!/^\s*(?:综上所述|总而言之|总的来看|不难发现)/.test(sentence.text) || r.id !== "ZH06" || s.end === text.length) found.push(make(r.id, "pattern", r.confidence, start, end, text.slice(start, end), hit.label, `${start + 1} → ${hit.label}：${r.description}`, false));
+    const body = segs.map((s) => s.excluded ? s.text.replace(/[^\n]/g, " ") : s.text).join("");
+    let lastParagraph = 0;
+    for (const paragraph of body.matchAll(/[^\n]+(?:\n(?![ \t]*\n)[^\n]+)*/g)) {
+      if (paragraph[0].trim()) lastParagraph = paragraph.index;
     }
-    const unique = [...new Map(found.map((x) => [`${x.start}:${x.end}:${x.ruleId}`, x])).values()].map((x) => ({ ...x, ignored: ignored2.has(x.id) }));
-    const active = unique.filter((x) => !x.ignored);
-    const visible = text.replace(/```[\s\S]*?```/g, "").replace(invisible, "").replace(/\s/g, "").length;
-    const patternHits = active.filter((x) => x.category === "pattern").length, formatHits = active.filter((x) => x.category === "format").length, reviewCount = active.filter((x) => !x.cleanable).length, invisibleCount = active.filter((x) => x.ruleId === "CHAR01").length;
+    for (const part of segs.filter((s) => !s.excluded)) {
+      for (const sentence of sentences(part.text, part.start)) {
+        for (const rule2 of rules.filter((r) => r.enabled && r.language === sentence.language)) {
+          for (const hit of rule2.matcher(sentence.text)) {
+            const start = sentence.start + hit.start, end = sentence.start + hit.end;
+            if (rule2.id === "ZH06" && start < lastParagraph) continue;
+            found.push(make(rule2.id, "pattern", rule2.confidence, start, end, text.slice(start, end), hit.label, `${start + 1} → ${hit.label}：${rule2.description}`, false));
+          }
+        }
+      }
+    }
+    const unique = [...new Map(found.map((f) => [`${f.start}:${f.end}:${f.ruleId}`, f])).values()].map((f) => ({ ...f, ignored: ignored2.has(f.id) }));
+    const active = unique.filter((f) => !f.ignored);
+    const visible = segs.reduce((count, s) => {
+      const value = s.kind === "link" ? markdownLinks(s.text)[0].label : s.excluded ? "" : s.text;
+      return count + [...value.replace(invisible, "").replace(/\s/g, "")].length;
+    }, 0);
+    const patternHits = active.filter((f) => f.category === "pattern").length;
+    const formatHits = active.filter((f) => f.category === "format").length;
+    const reviewCount = active.filter((f) => !f.cleanable).length;
+    const invisibleCount = active.filter((f) => f.ruleId === "CHAR01").length;
     return { findings: unique, visibleChars: visible, patternHits, formatHits, reviewCount, invisibleCount, density: visible >= 150 ? Math.round(patternHits / visible * 1e3 * 10) / 10 : null };
-  }
-  function emojiSafeInvisible(text) {
-    return text.replace(spaceLike, " ").replace(/[\u200B\u2060\u00AD\uFEFF\u200E\u200F\u202A-\u202E\u2066-\u2069\u200C\u200D]/g, (c, i) => (c === "‍" || c === "‌") && isEmojiJoiner(text, i) ? c : "");
   }
 
   // ../web/src/engine/clean.ts
   var defaultOptions = { invisible: true, markdown: true, typography: false, tracking: true, whitespace: true, homoglyph: false, plainText: true };
-  var normaliseHomoglyph = (s) => s.replace(/[АВЕІКМНОРСТХаЬсһеіјорѕху]/g, (c) => ({ А: "A", В: "B", Е: "E", І: "I", К: "K", М: "M", Н: "H", О: "O", Р: "P", С: "C", Т: "T", Х: "X", а: "a", Ь: "b", с: "c", һ: "h", е: "e", і: "i", ј: "j", о: "o", р: "p", ѕ: "s", х: "x", у: "y" })[c] || c);
   function clean(original2, options) {
-    let text = original2;
-    const changes = [];
-    const change = (next) => {
-      if (next !== text) {
-        changes.push({ start: 0, end: text.length, before: text, after: next });
-        text = next;
-      }
+    const edits = [];
+    const findings = analyze(original2).findings;
+    const parts = segment(original2);
+    const plain = options.markdown && options.plainText;
+    const add = (start, end, after, ruleIds) => {
+      const before = original2.slice(start, end);
+      if (before !== after) edits.push({ start, end, before, after, ruleIds });
     };
-    if (options.invisible) change(emojiSafeInvisible(text));
-    if (options.tracking) change(text.replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g, (_, label, url) => {
-      try {
-        const u = new URL(url);
-        [...u.searchParams.keys()].forEach((k) => {
-          if (/^utm_/i.test(k) || ["fbclid", "gclid"].includes(k.toLowerCase())) u.searchParams.delete(k);
-        });
-        return `[${label}](${u.toString()})`;
-      } catch {
-        return _;
+    const wordChar = (char) => /[\p{L}\p{N}\p{M}_]/u.test(char);
+    const removeDelimiter = (start, end) => {
+      const before = [...original2.slice(0, start)].at(-1) || "";
+      const after = [...original2.slice(end)][0] || "";
+      add(start, end, wordChar(before) && wordChar(after) ? " " : "", ["MD01"]);
+    };
+    for (const finding of findings) {
+      const { ruleId, start, end, text: text2 } = finding;
+      if (ruleId === "CHAR01" && options.invisible) add(start, end, emojiSafeInvisible(text2), [ruleId]);
+      if (ruleId === "PUNC01" && options.typography) add(start, end, normalizePunctuation(text2), [ruleId]);
+      if (ruleId === "CHAR02" && options.homoglyph) add(start, end, normaliseHomoglyph(text2), [ruleId]);
+      if (ruleId === "WS01" && options.whitespace) {
+        const after = text2.includes("\n") ? "\n\n" : end === original2.length || original2[end] === "\n" || original2[end] === "\r" ? "" : " ";
+        add(start, end, after, [ruleId]);
       }
-    }));
-    if (options.markdown && options.plainText) change(text.replace(/^#{1,6}\s+/gm, "").replace(/\*\*([^*]+)\*\*/g, "$1").replace(/`([^`]+)`/g, "$1").replace(/^>\s?/gm, "").replace(/^\s*(?:[-*+]\s+|\d+\.\s+)/gm, "").replace(/\[([^\]]+)\]\(([^)]+)\)/g, "$1"));
-    if (options.typography) change(text.replace(/[“”]/g, '"').replace(/[‘’]/g, "'").replace(/…/g, "...").replace(/[—–]/g, "-"));
-    if (options.whitespace) change(text.replace(/[ \t]+$/gm, "").replace(/[ \t]{2,}/g, " ").replace(/\n{3,}/g, "\n\n"));
-    if (options.homoglyph) change(normaliseHomoglyph(text));
-    const selected2 = (ruleId, findingText) => ({ CHAR01: options.invisible, LINK01: options.tracking, MD01: options.markdown && options.plainText, WS01: options.whitespace, CHAR02: options.homoglyph && normaliseHomoglyph(findingText) !== findingText, PUNC01: options.typography })[ruleId] || false;
-    const processed = analyze(original2).findings.filter((f) => f.cleanable && selected2(f.ruleId, f.text)).length;
-    const remaining = analyze(text).findings.filter((x) => !x.cleanable).length;
-    return { text, processed, remaining, changes };
+    }
+    for (const part of parts) {
+      if (part.kind === "link") {
+        const link = markdownLinks(part.text)[0];
+        if (plain) {
+          const before = [...original2.slice(0, part.start)].at(-1) || "";
+          const after = [...original2.slice(part.end)][0] || "";
+          const label = (wordChar(before) && wordChar(link.label[0] || "") ? " " : "") + link.label + (wordChar(link.label.at(-1) || "") && wordChar(after) ? " " : "");
+          add(part.start, part.end, label, ["MD01", "LINK01"]);
+        } else if (options.tracking) {
+          add(part.start + link.urlStart, part.start + link.urlEnd, stripTracking(link.url), ["LINK01"]);
+        }
+        continue;
+      }
+      if (!plain) continue;
+      if (part.excluded) {
+        if (part.kind === "quote") {
+          const marker = /^( {0,3})>[ \t]?/.exec(part.text);
+          if (!mathematical(part.text.slice(marker[0].length))) add(part.start + marker[1].length, part.start + marker[0].length, "", ["MD01"]);
+        } else if (part.codeStyle === "inline") {
+          const delimiter = /^`+/.exec(part.text);
+          if (delimiter) {
+            removeDelimiter(part.start, part.start + delimiter[0].length);
+            removeDelimiter(part.end - delimiter[0].length, part.end);
+          }
+        }
+        continue;
+      }
+      for (const match of part.text.matchAll(/^( {0,3})#{1,6}[ \t]+|^([ \t]*)(?:[-*+][ \t]+|\d+\.[ \t]+)/gm)) {
+        const start = part.start + match.index;
+        if (start > 0 && original2[start - 1] !== "\n") continue;
+        const end = start + match[0].length;
+        const lineEnd = original2.indexOf("\n", end);
+        if (match[2] !== void 0 && mathematical(original2.slice(end, lineEnd < 0 ? original2.length : lineEnd))) continue;
+        add(start + (match[1] ?? match[2]).length, end, "", ["MD01"]);
+      }
+      for (const match of part.text.matchAll(/\*\*([^*\n]+)\*\*/g)) {
+        const start = part.start + match.index, end = start + match[0].length;
+        removeDelimiter(start, start + 2);
+        removeDelimiter(end - 2, end);
+      }
+    }
+    const ordered = edits.sort((a, b) => a.start - b.start || a.end - b.end);
+    let text = "", at = 0;
+    const applied = [];
+    for (const edit of ordered) {
+      if (edit.start < at) continue;
+      text += original2.slice(at, edit.start) + edit.after;
+      at = edit.end;
+      applied.push(edit);
+    }
+    text += original2.slice(at);
+    const processed = findings.filter((f) => f.cleanable && applied.some(
+      (edit) => edit.ruleIds.includes(f.ruleId) && edit.start < f.end && edit.end > f.start || // A removed marker can also contain an entire whitespace finding.
+      edit.after === "" && edit.start <= f.start && edit.end >= f.end
+    )).length;
+    const remaining = analyze(text).findings.length;
+    return { text, processed, remaining, changes: applied.map(({ ruleIds: _ruleIds, ...edit }) => edit) };
   }
 
   // src/popup.ts
