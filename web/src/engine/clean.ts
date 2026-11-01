@@ -9,5 +9,7 @@ export function clean(original:string, options:CleanOptions):CleanResult { let t
  if(options.typography) change(text.replace(/[“”]/g,'"').replace(/[‘’]/g,"'").replace(/…/g,'...').replace(/[—–]/g,'-'));
  if(options.whitespace) change(text.replace(/[ \t]+$/gm,'').replace(/[ \t]{2,}/g,' ').replace(/\n{3,}/g,'\n\n'));
  if(options.homoglyph) change(normaliseHomoglyph(text));
- const remaining=analyze(text).findings.filter(x=>!x.cleanable).length; return {text,processed:changes.length,remaining,changes};
+ const selected=(ruleId:string,findingText:string)=> ({CHAR01:options.invisible,LINK01:options.tracking,MD01:options.markdown&&options.plainText,WS01:options.whitespace,CHAR02:options.homoglyph&&normaliseHomoglyph(findingText)!==findingText,PUNC01:options.typography}[ruleId]||false);
+ const processed=analyze(original).findings.filter(f=>f.cleanable&&selected(f.ruleId,f.text)).length;
+ const remaining=analyze(text).findings.filter(x=>!x.cleanable).length; return {text,processed,remaining,changes};
 }

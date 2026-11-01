@@ -3,6 +3,7 @@ import { rules } from './rules';
 import type { Analysis, Finding, Category, Confidence } from './types';
 const make=(ruleId:string,category:Category,confidence:Confidence,start:number,end:number,text:string,label:string,why:string,cleanable:boolean):Finding=>({id:`${ruleId}:${start}:${end}`,ruleId,category,confidence,start,end,text,label,why,cleanable});
 const invisible=/[\u200B\u2060\u00AD\uFEFF\u200E\u200F\u202A-\u202E\u2066-\u2069\u00A0\u202F]/g;
+const spaceLike=/[\u00A0\u202F]/g;
 const isEmojiJoiner=(text:string,i:number)=> { const before=[...text.slice(0,i)].at(-1)||''; const after=[...text.slice(i+1)][0]||''; return /\p{Extended_Pictographic}/u.test(before)&&/\p{Extended_Pictographic}/u.test(after); };
 function deterministic(text:string, excluded:Array<{start:number;end:number}>):Finding[] { const out:Finding[]=[]; const blocked=(n:number)=>excluded.some(x=>n>=x.start&&n<x.end);
  let m:RegExpExecArray|null;
@@ -21,11 +22,11 @@ function deterministic(text:string, excluded:Array<{start:number;end:number}>):F
 }
 export function analyze(text:string, ignored=new Set<string>()):Analysis {
  const segs=segment(text); const excluded=segs.filter(x=>x.excluded).map(x=>({start:x.start,end:x.end})); const found=deterministic(text,excluded);
- for(const s of segs.filter(x=>!x.excluded)) for(const sentence of sentences(s.text,s.start)) for(const r of rules.filter(r=>r.enabled&&r.language===s.language)) for(const hit of r.matcher(sentence.text)) {
+ for(const s of segs.filter(x=>!x.excluded)) for(const sentence of sentences(s.text,s.start)) for(const r of rules.filter(r=>r.enabled&&r.language===sentence.language)) for(const hit of r.matcher(sentence.text)) {
    const start=sentence.start+hit.start,end=sentence.start+hit.end; if(!/^\s*(?:综上所述|总而言之|总的来看|不难发现)/.test(sentence.text)||r.id!=='ZH06'||s.end===text.length) found.push(make(r.id,'pattern',r.confidence,start,end,text.slice(start,end),hit.label,`${start+1} → ${hit.label}：${r.description}`,false));
  }
  const unique=[...new Map(found.map(x=>[`${x.start}:${x.end}:${x.ruleId}`,x])).values()].map(x=>({...x,ignored:ignored.has(x.id)})); const active=unique.filter(x=>!x.ignored);
  const visible=text.replace(/```[\s\S]*?```/g,'').replace(invisible,'').replace(/\s/g,'').length; const patternHits=active.filter(x=>x.category==='pattern').length, formatHits=active.filter(x=>x.category==='format').length, reviewCount=active.filter(x=>!x.cleanable).length, invisibleCount=active.filter(x=>x.ruleId==='CHAR01').length;
- return {findings:unique,visibleChars:visible,patternHits,formatHits,reviewCount,invisibleCount,density:visible>=150?Math.round(active.length/visible*1000*10)/10:null};
+ return {findings:unique,visibleChars:visible,patternHits,formatHits,reviewCount,invisibleCount,density:visible>=150?Math.round(patternHits/visible*1000*10)/10:null};
 }
-export function emojiSafeInvisible(text:string):string { return text.replace(/[\u200B\u2060\u00AD\uFEFF\u200E\u200F\u202A-\u202E\u2066-\u2069\u00A0\u202F\u200C\u200D]/g,(c,i)=> (c==='\u200D'||c==='\u200C')&&isEmojiJoiner(text,i)?c:''); }
+export function emojiSafeInvisible(text:string):string { return text.replace(spaceLike,' ').replace(/[\u200B\u2060\u00AD\uFEFF\u200E\u200F\u202A-\u202E\u2066-\u2069\u200C\u200D]/g,(c,i)=> (c==='\u200D'||c==='\u200C')&&isEmojiJoiner(text,i)?c:''); }
