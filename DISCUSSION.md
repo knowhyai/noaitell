@@ -19,3 +19,18 @@ ChatGPT 上述建议已并入 SPEC.md 文末「v1 修订补充（2026-11-01 讨�
 - Gemini
 - 豆包
 - DeepSeek
+
+## 开源同类项目与社交讨论调研（2026-11-01）
+### 开源底座结论
+- 首选底座维持不变：pixelstrunk/watermark-cleaner（MIT，浏览器与 CLI 共用一套规则集，2026-10 仍活跃）；cronos3k/Text-Stealth-Watermark-Cleaner-Detector（MIT）作零宽字符规则交叉校验。没有发现更好的底座。
+- 规则增援（均为 MIT，可借模式/词表）：英文 brandonwise/humanizer（基于维基「Signs of AI writing」的模式目录）、ProfSynapse/DeSlop（36 条模式目录，含误判裁决规则）、asavvin-pixel/unslop（三层去味：排版/词汇/结构）；中文 Show-Chan97/Humanizer-zh、SevenDataAI/realtext-zh。
+- 避坑：ilien-dev/quiron 为 AGPL-3.0，只看不抄；ksanyok/TextHumanize 双许可（商用收费），不集成；GS-Seven/textscopes、inaamilyas/ai-text-cleaner、egc365/signs-of-ai-writing 无 LICENSE，只参考。
+### 社交侧（X / Reddit）要点
+- 需求真实且焦虑驱动：真人因破折号被误判为 AI 的案例多起；社区共识是「看密度不看存在」——人类基线约 3.23 个 em dash/千词，GPT-4.1 约 10.62 个/千词。
+- 句式 tell 声量高于单词表：「not just X — it's Y」对偶、三段排比、脚手架开头、句长过于均匀。
+- 隐形字符是硬痛点：U+202F 等特殊空格会破坏搜索与数据解析；零宽字符随复制扩散。
+- humanizer 改写类最大抱怨是改坏原意——反证「只标出 + 确定性清理、不动词句」的定位是对的。
+- 定价信号：改写类订阅 $10–30/月；纯清理层目前基本免费，付费点应在改写/批量/扩展高级功能，基础清理免费。
+- 竞品 ClearPaste、RemoveAITells、TextNinja 已在跑且定位重合，差异点压在：密度判定、句式 tell、中文规则、后续扩展端。
+### 因此追加到 SPEC 的修订（见 SPEC.md「修订补充二」）
+句式类单列（只标不改）、em dash 密度阈值参考、防误伤 emoji-safe 强化、utm 与引用标记在 UI 中降权展示。
