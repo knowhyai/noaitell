@@ -9,7 +9,7 @@ export const rules:Rule[]=[
  rule('EN10','en','medium','元话语填充可删减或改为具体事实。',rx(/^\s*(?:it(?:'s| is)\s+(?:important|worth|crucial|essential)\s+to\s+(?:note|remember|mention|highlight)|it should be noted that)\b/i,'Meta filler'),true,[{text:"It's important to note that results may vary.",matches:true},{text:'Results vary.',matches:false}]),
  rule('ZH01','zh','medium','“不仅—更是”双标记是常见的升级对偶。',rx(/(?:不仅|不但)[^。！？]{1,40}?(?:更|更是|而且|还)/,'不仅—更是'),true,[{text:'这不仅提高了效率，更改变了团队协作的方式。',matches:true},{text:'不仅提高了效率。',matches:false}]),
  rule('ZH02','zh','medium','“不是—而是”结构值得确认是否需要保留。',rx(/不是[^。！？]{1,50}?而是/,'不是—而是'),true,[{text:'真正重要的不是效率，而是价值。',matches:true},{text:'这不是效率问题。',matches:false}]),
- rule('ZH04','zh','medium','时代背景套壳可改为具体背景或数据。',rx(/^\s*(?:在(?:当今|如今|当下)[^。！？]{0,35}?(?:的)?(?:时代|社会|背景|环境)(?:下)?|随着[^。！？]{1,35}?(?:不断|日益|快速|持续)(?:发展|普及|进步))/,'时代背景套壳'),true,[{text:'随着人工智能的不断发展，内容创作正在被重塑。',matches:true},{text:'在当今数字化时代，内容创作正在被重塑。',matches:true},{text:'2024年随着市场发展，销量上升。',matches:false}]),
+ rule('ZH04','zh','medium','时代背景套壳可改为具体背景或数据。',rx(/(?<![^，,；;\s])(?:在(?:当今|如今|当下)[^，,。！？]{0,35}?(?:的)?(?:时代|社会|背景|环境)(?:下)?|随着[^，,。！？]{1,35}?(?:不断|日益|快速|持续)(?:发展|普及|进步))/,'时代背景套壳'),true,[{text:'随着人工智能的不断发展，内容创作正在被重塑。',matches:true},{text:'在当今数字化时代，内容创作正在被重塑。',matches:true},{text:'2024年随着市场发展，销量上升。',matches:false}]),
  rule('ZH05','zh','medium','空泛强调开场应由具体证据支撑。',rx(/(?:值得注意的是|需要指出的是|值得一提的是|不容忽视的是|不可否认|毋庸置疑)[，,]?/,'空泛强调'),true,[{text:'值得注意的是，这一趋势具有深远意义。',matches:true},{text:'数据显示，值得注意的是趋势上升。',matches:true},{text:'数据显示，趋势上升。',matches:false}]),
  rule('ZH06','zh','medium','机械收束语仅在末段值得人工复核。',rx(/^\s*(?:综上所述|总而言之|总的来看|不难发现)(?:[，,]|\s|$)/,'机械收束'),true,[{text:'综上所述，我们应积极拥抱变化。',matches:true},{text:'总而言之的定义很有趣。',matches:false}]),
  // Experimental data stays shipped but disabled.
