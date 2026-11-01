@@ -82,3 +82,9 @@
 2. 阈值口径纠正：破折号基线数字（约 3.23 / 10.62 个每千词）仅为特定研究样本，不得写成通用阈值或用于产品承诺；密度阈值一律做成可调规则参数，中英文分别归一化；句式密度与格式残留分开统计、分开呈现。
 3. 英文副标题定为：Spot AI writing patterns. Keep your meaning.（中文副标题维持修订补充一的版本。）
 4. 上线门槛（Andi 把关）：上线前完成三项低成本验证——10 名目标用户偏好对比（≥6 人偏好句式检查）；真人与 AI 文本各 30 篇标注测试（高置信规则准确率 ≥85%、零静默改意）；上线后 100 次有效使用观察（≥20% 完成检查并复制或处理，且出现自然回访）。
+
+## 修订补充五（2026-11-01 开发工具箱，Wood 指示：能用就用）
+
+1. UI 原型：开发前或开发早期，可用 JimLiu/baoyu-design 的设计 skill 产出自包含 HTML 界面原型，作为开发的视觉参照（仓库：github.com/JimLiu/baoyu-design）。
+2. 视觉规范：落地页与 SEO 内页的设计遵循 elayadesign/ai-design-skills 的 landing-page-design 技能（MIT，可将其 SKILL.md 引入仓库供开发模型遵循；仓库：github.com/elayadesign/ai-design-skills）。
+3. 通则：现成的 skill、插件、工具能接进开发流程的就用，不重复造轮子；本条与"备选开发：插件、skill 和工具"同向。
