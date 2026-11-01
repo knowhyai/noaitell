@@ -1,0 +1,23 @@
+{
+  "manifest_version": 3,
+  "name": "NoAITell — AI Text Cleaner",
+  "short_name": "NoAITell",
+  "version": "1.0.0",
+  "description": "检查并清理 AI 文本中的格式残留与模板化表达。本地运行，不上传文本。",
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "NoAITell · Spot AI writing patterns. Keep your meaning.",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "32": "icons/icon32.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  }
+}

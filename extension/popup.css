@@ -1,0 +1,70 @@
+/* NoAITell 弹窗样式。分类色沿用 UI.md:蓝=模板化表达、琥珀=排版与字符、绿=复制与格式残留、紫=链接与引用;颜色只表类别,置信由下划线线型表达。 */
+:root{--format:#16a34a;--typography:#d97706;--pattern:#2563eb;--link:#9333ea;--ink:#0f172a;--muted:#64748b;--line:#e2e8f0;--bg:#f8fafc}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{width:660px;max-height:560px;overflow-y:auto;font:13px/1.55 -apple-system,"PingFang SC","Segoe UI",sans-serif;color:var(--ink);background:var(--bg)}
+#app{padding:10px 12px 14px}
+header{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;border-bottom:1px solid var(--line);padding-bottom:8px;margin-bottom:8px}
+header .brand{font-weight:700;font-size:15px}
+header .brand span{color:var(--pattern)}
+header .taglines{display:flex;flex-direction:column;font-size:11px;color:var(--muted)}
+header .taglines b{color:var(--ink);font-size:11px}
+header .local{margin-left:auto;font-size:11px;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:2px 8px;white-space:nowrap}
+.summary{display:flex;gap:14px;align-items:center;background:#fff;border:1px solid var(--line);border-radius:8px;padding:6px 10px;margin-bottom:8px;flex-wrap:wrap}
+.summary div{display:flex;flex-direction:column}
+.summary small{color:var(--muted)}
+.summary strong{font-size:15px}
+.summary p{margin:0 0 0 auto;font-size:11px;color:var(--muted)}
+nav.chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
+.chip{display:inline-flex;align-items:center;gap:5px;border:1px solid var(--line);background:#fff;border-radius:999px;padding:3px 9px;font-size:12px;cursor:pointer}
+.chip:disabled{opacity:.45;cursor:default}
+.chip i{width:8px;height:8px;border-radius:50%;background:var(--muted)}
+.chip.format i{background:var(--format)}.chip.typography i{background:var(--typography)}.chip.pattern i{background:var(--pattern)}.chip.link i{background:var(--link)}
+.chip.selected{outline:2px solid var(--ink)}
+.chip b{font-weight:600}
+.stale{background:#fef3c7;border:1px solid #fcd34d;border-radius:8px;padding:5px 10px;margin-bottom:8px;font-size:12px}
+.pane{background:#fff;border:1px solid var(--line);border-radius:8px;padding:8px 10px;margin-bottom:8px}
+.pane-head{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.pane-head h2{margin:0;font-size:13px}
+.pane-head label{margin-left:auto;font-size:12px;color:var(--muted)}
+textarea#editor{width:100%;min-height:110px;resize:vertical;border:1px solid var(--line);border-radius:6px;padding:6px;font:12px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace}
+.preview-label{font-size:11px;color:var(--muted);margin:6px 0 3px}
+.source-preview{border:1px dashed var(--line);border-radius:6px;padding:6px;white-space:pre-wrap;word-break:break-word;font:12px/1.6 inherit;max-height:180px;overflow:auto;background:var(--bg)}
+.empty-state{color:var(--muted);font-size:12px}
+mark{border-radius:2px;padding:0 1px;color:inherit}
+mark.format{background:color-mix(in srgb,var(--format) 14%,transparent);text-decoration:underline;text-decoration-color:var(--format)}
+mark.typography{background:color-mix(in srgb,var(--typography) 14%,transparent);text-decoration:underline;text-decoration-color:var(--typography)}
+mark.pattern{background:color-mix(in srgb,var(--pattern) 14%,transparent);text-decoration:underline;text-decoration-color:var(--pattern)}
+mark.link{background:color-mix(in srgb,var(--link) 14%,transparent);text-decoration:underline;text-decoration-color:var(--link)}
+mark.dashed{text-decoration-style:dashed}
+.options{display:grid;grid-template-columns:1fr 1fr;gap:3px 14px;font-size:12px;margin:4px 0}
+.options label{display:flex;gap:6px;align-items:center}
+.mode{display:flex;gap:6px;margin:6px 0}
+.mode button{border:1px solid var(--line);background:#fff;border-radius:6px;padding:3px 10px;font-size:12px;cursor:pointer}
+.mode button.active{background:var(--ink);color:#fff;border-color:var(--ink)}
+.hint{color:var(--muted);font-size:11px;margin:2px 0 6px}
+.actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:8px}
+.actions button{border:1px solid var(--line);background:#fff;border-radius:6px;padding:5px 12px;font-size:12px;cursor:pointer}
+.actions button.primary{background:var(--pattern);border-color:var(--pattern);color:#fff;font-weight:600}
+.actions button:disabled{opacity:.45;cursor:default}
+.actions .count{font-size:11px;color:var(--muted)}
+.result-body{white-space:pre-wrap;word-break:break-word;min-height:44px;font:12px/1.6 inherit}
+.result-body .muted{color:var(--muted);white-space:normal}
+.result-body .nohits{color:var(--ink);white-space:normal}
+.result-body .nohits small{display:block;color:var(--muted);margin-top:2px}
+.result-body.diff-view{white-space:normal}
+.result-body .diff del{display:block;background:#fee2e2;text-decoration:line-through;border-radius:4px;padding:4px;white-space:pre-wrap;margin-bottom:6px}
+.result-body .diff ins{display:block;background:#dcfce7;text-decoration:none;border-radius:4px;padding:4px;white-space:pre-wrap}
+.view-toggle{margin-left:auto;display:flex;gap:4px}
+.view-toggle button{border:1px solid var(--line);background:#fff;border-radius:6px;padding:2px 9px;font-size:11px;cursor:pointer}
+.view-toggle button.active{background:var(--ink);color:#fff;border-color:var(--ink)}
+.findings{display:flex;flex-direction:column;gap:6px}
+.finding{border:1px solid var(--line);border-left-width:3px;border-radius:6px;padding:6px 8px;background:#fff}
+.finding.format{border-left-color:var(--format)}.finding.typography{border-left-color:var(--typography)}.finding.pattern{border-left-color:var(--pattern)}.finding.link{border-left-color:var(--link)}
+.finding .pill{display:inline-block;font-size:10px;border:1px solid var(--line);border-radius:999px;padding:0 6px;margin-right:6px;color:var(--muted)}
+.finding code{font-size:11px;background:var(--bg);border-radius:4px;padding:0 3px}
+.finding p{margin:3px 0 4px;color:var(--muted);font-size:11px}
+.finding-actions{display:flex;gap:6px}
+.finding-actions button{border:1px solid var(--line);background:#fff;border-radius:5px;padding:1px 8px;font-size:11px;cursor:pointer}
+.muted{color:var(--muted)}
+footer.privacy{font-size:11px;color:var(--muted);border-top:1px solid var(--line);padding-top:6px}
