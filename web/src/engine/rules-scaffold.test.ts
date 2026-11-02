@@ -101,6 +101,10 @@ describe('scaffoldChains 序列骨架统计', () => {
   it('英文链：First/Second/Third 与 Firstly/Secondly/Finally 各计 1 条', () => {
     expect(stat('First, define the goal. Second, pick the metric. Third, review weekly.')).toBe(1);
     expect(stat('Firstly, gather data. Secondly, clean it. Finally, publish the results.')).toBe(1);
+    expect(stat('First, we gathered data. Second, we cleaned it. Finally, we shipped it.')).toBe(1);
+  });
+  it('英文反例：序数词直接修饰名词（first prize）不计为序列标记', () => {
+    expect(stat('First prize went to Alice. Second prize went to Bob. Finally, the prizes were distributed.')).toBe(0);
   });
   it('英文非句首的 first/second 不计入', () => {
     expect(stat('The first chapter sets the scene, the second builds it, and the third resolves it.')).toBe(0);

@@ -44,6 +44,7 @@ const samples = [
   '首先要把目标拆小。\n\n其次要保持每天复盘。\n\n最后要坚持长期跟踪。', // 规则加强批:ZH07 骨架(实验规则默认关闭,应零命中)+ 中文链统计
   '第一步要准备环境。\n第二步要安装依赖。\n第三步要运行测试。',       // 规则加强批:第X步计数用法不成链、教程不命中
   'First, define the goal.\nSecond, pick the metric.\nThird, review weekly.', // 规则加强批:英文链统计
+  'First prize went to Alice. Second prize went to Bob. Finally, the prizes were distributed.', // 规则加强批追加:序数词修饰名词不成链
   '',                                     // 空文本
   '   \n\n  ',                            // 纯空白
   'Plain text with no tells at all, just a normal sentence.',        // 零命中
@@ -89,7 +90,8 @@ assert.equal(web.analyze(skeletonText).findings.length, 0, 'ZH07 实验规则默
 assert.equal(web.analyze(skeletonText).scaffoldChains, 1, '中文序列骨架应计 1 条链');
 assert.equal(web.analyze('第一步要准备环境。\n第二步要安装依赖。\n第三步要运行测试。').scaffoldChains, 0, '第X步计数用法不应成链');
 assert.equal(web.analyze('First, define the goal.\nSecond, pick the metric.\nThird, review weekly.').scaffoldChains, 1, '英文序列骨架应计 1 条链');
-checks += 4;
+assert.equal(web.analyze('First prize went to Alice. Second prize went to Bob. Finally, the prizes were distributed.').scaffoldChains, 0, '序数词修饰名词(first prize)不应成链');
+checks += 5;
 
 // 4. 打包完整性:popup.js 内联了全部启用句式规则;popup.html 引用 popup.js;manifest 引用的图标存在。
 const popupJs = readFileSync(new URL('../popup.js', import.meta.url), 'utf8');

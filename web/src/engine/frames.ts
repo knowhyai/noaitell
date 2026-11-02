@@ -47,6 +47,9 @@ const ZH_ORDINAL = /^第[一二三四五六七八九十]$/;
 // 英文标记须位于行首或 .!?;: 之后,避免 the first / at first 一类普通名词用法。
 const EN_RANK = new Map([['first', 1], ['firstly', 1], ['second', 2], ['secondly', 2], ['third', 3], ['thirdly', 3], ['fourth', 4], ['fourthly', 4], ['fifth', 5], ['fifthly', 5], ['finally', 99], ['lastly', 99]]);
 const EN_MARKER = /\b(?:firstly|first|secondly|second|thirdly|third|fourthly|fourth|fifthly|fifth|lastly|finally)\b/gi;
+// 序数词直接修饰名词(first prize/second prize)是计数用法而非序列标记:序数族须后跟逗号或冒号;
+// Finally/Lastly 恒为副词,无修饰名词用法,不作此要求。
+const EN_ORDINAL = /(?:first|firstly|second|secondly|third|thirdly|fourth|fourthly|fifth|fifthly)/i;
 const TERMINAL_RANK = 99;
 
 export function scaffoldChainCount(body: string): number {
@@ -63,6 +66,7 @@ export function scaffoldChainCount(body: string): number {
   const en: number[] = [];
   for (const match of body.matchAll(EN_MARKER)) {
     if (match.index && !/[\n.!?;:]\s*$/.test(body.slice(0, match.index))) continue;
+    if (EN_ORDINAL.test(match[0]) && !/^\s*[,:]/.test(body.slice(match.index + match[0].length))) continue;
     en.push(EN_RANK.get(match[0].toLowerCase()) ?? TERMINAL_RANK);
   }
   return chains(zh) + chains(en);

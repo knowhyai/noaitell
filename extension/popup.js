@@ -263,6 +263,7 @@
   var ZH_ORDINAL = /^第[一二三四五六七八九十]$/;
   var EN_RANK = /* @__PURE__ */ new Map([["first", 1], ["firstly", 1], ["second", 2], ["secondly", 2], ["third", 3], ["thirdly", 3], ["fourth", 4], ["fourthly", 4], ["fifth", 5], ["fifthly", 5], ["finally", 99], ["lastly", 99]]);
   var EN_MARKER = /\b(?:firstly|first|secondly|second|thirdly|third|fourthly|fourth|fifthly|fifth|lastly|finally)\b/gi;
+  var EN_ORDINAL = /(?:first|firstly|second|secondly|third|thirdly|fourth|fourthly|fifth|fifthly)/i;
   var TERMINAL_RANK = 99;
   function scaffoldChainCount(body) {
     const chains = (ranks) => {
@@ -288,6 +289,7 @@
     const en = [];
     for (const match of body.matchAll(EN_MARKER)) {
       if (match.index && !/[\n.!?;:]\s*$/.test(body.slice(0, match.index))) continue;
+      if (EN_ORDINAL.test(match[0]) && !/^\s*[,:]/.test(body.slice(match.index + match[0].length))) continue;
       en.push(EN_RANK.get(match[0].toLowerCase()) ?? TERMINAL_RANK);
     }
     return chains(zh) + chains(en);

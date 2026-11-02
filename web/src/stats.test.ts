@@ -27,7 +27,11 @@ afterEach(() => vi.unstubAllGlobals());
 it('Part B: shows one neutral scaffold line in the stats area when a chain is present', async () => {
   const app = await mount();
   app.input('首先，我们要看清问题。其次，拆解问题的成因。最后，给出可执行的方案。');
-  expect(app.html()).toContain('另检测到 1 处序列骨架（首先…其次…最后式结构）');
+  expect(app.html()).toContain('检测到 1 处序列骨架');
+  expect(app.html()).toContain('可能与上方命中重叠');
+  expect(app.html()).toContain('不计入句式命中密度');
+  expect(app.html()).toContain('不构成任何判断');
+  expect(app.html()).not.toContain('另检测到');
   expect(app.html()).toContain('数值不代表 AI 生成概率');
 });
 
