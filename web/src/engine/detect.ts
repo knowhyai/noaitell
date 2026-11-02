@@ -2,6 +2,7 @@ import { segment, sentences } from './segments';
 import { rules } from './rules';
 import { invisible, meaningfulJoiner, mixedWord, mathematical } from './characters';
 import { markdownLinks, trackingKeys } from './links';
+import { repeatedOpeningHits, scaffoldChainCount } from './frames';
 import type { Analysis, Finding, Category, Confidence } from './types';
 export { emojiSafeInvisible } from './characters';
 
@@ -79,9 +80,11 @@ export function analyze(text: string, ignored = new Set<string>()): Analysis {
   for (const paragraph of body.matchAll(/[^\n]+(?:\n(?![ \t]*\n)[^\n]+)*/g)) {
     if (paragraph[0].trim()) lastParagraph = paragraph.index;
   }
+  const zh07 = rules.find(r => r.id === 'ZH07');
   for (const part of segs.filter(s => !s.excluded)) {
     for (const sentence of sentences(part.text, part.start)) {
-      for (const rule of rules.filter(r => r.enabled && r.language === sentence.language)) {
+      // ZH07 is paragraph-level (≥3 adjacent framed openings) and runs below, outside the per-sentence loop.
+      for (const rule of rules.filter(r => r.enabled && r.language === sentence.language && r.id !== 'ZH07')) {
         for (const hit of rule.matcher(sentence.text)) {
           const start = sentence.start + hit.start, end = sentence.start + hit.end;
           if (rule.id === 'ZH06' && start < lastParagraph) continue;
@@ -89,6 +92,9 @@ export function analyze(text: string, ignored = new Set<string>()): Analysis {
         }
       }
     }
+  }
+  if (zh07?.enabled) for (const hit of repeatedOpeningHits(body, text)) {
+    found.push(make('ZH07', 'pattern', zh07.confidence, hit.start, hit.end, text.slice(hit.start, hit.end), hit.label, `${hit.start + 1} → ${hit.label}：${zh07.description}`, false));
   }
   const unique = [...new Map(found.map(f => [`${f.start}:${f.end}:${f.ruleId}`, f])).values()].map(f => ({ ...f, ignored: ignored.has(f.id) }));
   const active = unique.filter(f => !f.ignored);
@@ -101,5 +107,5 @@ export function analyze(text: string, ignored = new Set<string>()): Analysis {
   const formatHits = active.filter(f => f.category === 'format').length;
   const reviewCount = active.filter(f => !f.cleanable).length;
   const invisibleCount = active.filter(f => f.ruleId === 'CHAR01').length;
-  return { findings: unique, visibleChars: visible, patternHits, formatHits, reviewCount, invisibleCount, density: visible >= 150 ? Math.round(patternHits / visible * 1000 * 10) / 10 : null };
+  return { findings: unique, visibleChars: visible, patternHits, formatHits, reviewCount, invisibleCount, scaffoldChains: scaffoldChainCount(body), density: visible >= 150 ? Math.round(patternHits / visible * 1000 * 10) / 10 : null };
 }
