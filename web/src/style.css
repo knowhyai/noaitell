@@ -151,6 +151,7 @@ main{max-width:1440px;margin:0 auto;padding:0 32px}
 .cleanup-head>span:first-child{flex:1;min-width:0}
 .cleanup-toggle{color:var(--accent);white-space:nowrap;font-size:12px;flex:none}
 .cleanup-body{margin-top:10px}
+.cleanup-note{margin:0 0 10px;font-size:12px;color:var(--muted)}
 .opt-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .opt-grid label{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--body);min-width:0}
 .opt-grid input[type=checkbox]{width:16px;height:16px;margin:0;accent-color:var(--accent);flex:none}
