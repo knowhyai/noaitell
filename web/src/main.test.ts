@@ -262,3 +262,26 @@ it('links the editor caret to the matching finding row and syncs navigation', as
   expect(row.classList.contains('hl-hot')).toBe(false);
   expect(scrollIntoView).toHaveBeenCalledTimes(1);
 });
+
+it('blocks the fourth cleaning while keeping source and the previous result available', async () => {
+  const app = await mount();
+  app.input('A\u200BB');
+  app.click('#clean');
+  app.click('#clean');
+  app.click('#clean');
+  expect(app.html()).toContain('0 free uses left today');
+  app.click('#clean');
+  expect(app.html()).toContain('You have used today’s 3 free cleanings');
+  expect(app.html()).toContain('A\u200BB');
+  expect(app.html()).toContain('AB');
+});
+
+it('refuses oversized cleaning without consuming an allowance', async () => {
+  const app = await mount();
+  app.input('word '.repeat(501));
+  app.click('#clean');
+  expect(app.html()).toContain('Free cleaning supports up to 500 words per use');
+  app.input('Short draft');
+  app.click('#clean');
+  expect(app.html()).toContain('2 free uses left today');
+});

@@ -1,6 +1,5 @@
 import { expect, it } from 'vitest';
 import { readdirSync, readFileSync } from 'node:fs';
-import { generatePages } from './pages.mjs';
 import { resolve } from 'node:path';
 const root = resolve(import.meta.dirname, '..');
 const slugs = ['claude-watermark','chatgpt-watermark','gemini-ai-watermark','ai-watermark-checker','ai-text-watermark-remover','remove-ai-watermark-from-text','remove-em-dashes','invisible-character-remover','grok-watermark','textgrain','synthid-detector','ai-tell-checker'];

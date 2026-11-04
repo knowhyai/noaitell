@@ -15,3 +15,18 @@ Edit page copy in `content/pages/<slug>.json` (`home.json` for `/`). Each record
 The free quota counts successful cleaning requests, not scans, with three uses per local calendar day and 500 words per use. Only the date and count are persisted in localStorage; this browser-only limit is not a server-enforced entitlement. Pro plans and Creem payments are previews, with disabled upgrade buttons. Accounts, payment processing and backend storage are reserved for phase 2.
 
 Cloudflare Pages configuration is in `wrangler.toml`; use `web/` as the project root and `npm run build` as the build command. Deployment and DNS changes are separate steps and have not been performed.
+
+Launch build: run `npm ci`, `npm run build`, and `npx vitest run` from web/.
+Tests build the static output once before checking it. Page content is maintained in
+content/pages/*.json; scripts/pages.mjs renders HTML during development and builds.
+The Vite entry list comes from that content catalog. Duplicate legacy routes are
+301 redirects in public/_redirects and are omitted from the sitemap.
+
+Cloudflare Pages: project name noaitell, build command npm run build, root directory
+web, output directory dist. wrangler.toml declares the output directory.
+Deployment and DNS changes are separate manual operations; this work does neither.
+
+The free allowance is three cleanings per local calendar day, 500 segmented words
+per cleaning. Only the date and count are stored in localStorage; drafts are not saved.
+Scanning does not spend an allowance. Pro checkout is disabled. No account, webhook,
+D1 database, payment credentials, or text upload endpoint is included.

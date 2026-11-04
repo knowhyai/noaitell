@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "node scripts/pages.mjs && vite",
     "build": "node scripts/pages.mjs && tsc --noEmit && vite build",
-    "test": "npm run build && vitest run"
+    "test": "vitest run"
   },
   "devDependencies": {
     "typescript": "^5.7.2",
