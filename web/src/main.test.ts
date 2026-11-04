@@ -34,6 +34,8 @@ const sample = 'It is important to note that this works. Visit [guide](https://e
 
 async function mount() {
   vi.resetModules();
+  const values = new Map<string, string>();
+  vi.stubGlobal('localStorage', { getItem: (k: string) => values.get(k) ?? null, setItem: (k: string, v: string) => values.set(k, v) });
   const nodes = new Map<string, ReturnType<typeof makeNode>>();
   for (const selector of ['#app', '#editor', '#clean', '#high', '#restore', '#backdrop', '#hide']) {
     nodes.set(selector, makeNode());
@@ -74,25 +76,25 @@ it('F11: renders statistics from the actual cleaning action, including high-conf
   app.typography.checked = true;
   app.typography.onchange();
   app.click('#high');
-  expect(app.html()).toContain('已实际清理 1 项 · 结果中剩余命中 2 项（含未选清理项与需复核项）');
+  expect(app.html()).toContain('Cleaned 1 items · 2 findings remain (including unselected items and review suggestions)');
   app.typography.checked = false;
   app.typography.onchange();
-  expect(app.html()).toContain('已实际清理 1 项 · 结果中剩余命中 2 项');
+  expect(app.html()).toContain('Cleaned 1 items · 2 findings remain');
   app.click('#restore');
-  expect(app.html()).not.toContain('已实际清理');
+  expect(app.html()).not.toContain('Cleaned 1 items');
 });
 
 it('F11: still displays statistics when cleaning produces empty output', async () => {
   const app = await mount();
   app.input('\u200B');
   app.click('#clean');
-  expect(app.html()).toContain('已实际清理 1 项 · 结果中剩余命中 0 项');
+  expect(app.html()).toContain('Cleaned 1 items · 0 findings remain');
 });
 
 it('keeps the zero-hit wording and excludes invisible findings from inline highlights', async () => {
   const app = await mount();
   app.input('Ordinary text.');
-  expect(app.html()).toContain('未发现当前规则覆盖的问题');
+  expect(app.html()).toContain('No issues found by current rules');
   app.input('A\u200BB');
   expect(app.backdrop()).not.toContain('<mark');
 });
@@ -122,13 +124,13 @@ it('collapses cleanup options into a one-line summary that expands on demand', a
   const app = await mount();
   const selected = (['invisible', 'markdown', 'typography', 'tracking', 'whitespace', 'homoglyph'] as Array<keyof CleanOptions>)
     .filter(k => defaultOptions[k]).length;
-  expect(app.html()).toContain(`已选 ${selected}/6`);
-  expect(app.html()).toContain('展开');
+  expect(app.html()).toContain(`Selected ${selected}/6`);
+  expect(app.html()).toContain('Expand');
   expect(app.html()).not.toContain('data-option');
   app.tap({ cleanup: 'toggle' });
   expect(app.html()).toContain('data-option');
-  expect(app.html()).toContain('收起');
-  expect(app.html()).toContain('清理所选项');
+  expect(app.html()).toContain('Collapse');
+  expect(app.html()).toContain('Clean selected');
   app.tap({ cleanup: 'toggle' });
   expect(app.html()).not.toContain('data-option');
 });
@@ -160,19 +162,19 @@ it('closes the mobile drawer when locating a finding', async () => {
   expect(app.editor.selection[0]).toBeGreaterThanOrEqual(0);
 });
 
-it('keeps the H1 verbatim in the thin top bar and drops the marketing banner', async () => {
+it('keeps the English tool label in the thin top bar', async () => {
   const app = await mount();
-  expect(app.html()).toContain('<h1 class="page-title">不判断作者，只找可清理的痕迹。</h1>');
-  expect(app.html()).toContain('⌾ 本地运行 · 不上传');
+  expect(app.html()).toContain('<span class="page-title">AI Text Cleaner</span>');
+  expect(app.html()).toContain('⌾ Local · No text uploads');
   expect(app.html()).not.toContain('class="intro"');
   expect(app.html()).toContain('class="page-note"');
 });
 
 it('shows the verbatim cleanup note when the options panel expands', async () => {
   const app = await mount();
-  expect(app.html()).not.toContain('可控、可撤销；已忽略的条目不会被清理。');
+  expect(app.html()).not.toContain('You control the changes; ignored findings stay untouched.');
   app.tap({ cleanup: 'toggle' });
-  expect(app.html()).toContain('可控、可撤销；已忽略的条目不会被清理。');
+  expect(app.html()).toContain('You control the changes; ignored findings stay untouched.');
 });
 
 it('rescans automatically after the 700ms debounce when there is no clean result', async () => {
@@ -183,19 +185,19 @@ it('rescans automatically after the 700ms debounce when there is no clean result
     expect(app.backdrop()).toContain('<mark');
     const longer = sample + ' Let\'s dive into the key benefits.';
     app.input(longer);
-    expect(app.html()).toContain('文本已修改，正在重新检测');
+    expect(app.html()).toContain('Text changed, checking again');
     vi.advanceTimersByTime(699);
-    expect(app.html()).toContain('文本已修改，正在重新检测');
+    expect(app.html()).toContain('Text changed, checking again');
     expect(app.backdrop()).not.toContain('<mark');
     vi.advanceTimersByTime(1);
-    expect(app.html()).not.toContain('文本已修改');
+    expect(app.html()).not.toContain('Text changed');
     const expected = analyze(longer).findings.filter(f => !f.ignored && f.ruleId !== 'CHAR01').length;
     expect((app.backdrop().match(/<mark\b/g) || []).length).toBe(expected);
     app.input(longer + ' It is important to note that this works.');
     vi.advanceTimersByTime(699);
-    expect(app.html()).toContain('文本已修改，正在重新检测');
+    expect(app.html()).toContain('Text changed, checking again');
     vi.advanceTimersByTime(1);
-    expect(app.html()).not.toContain('文本已修改');
+    expect(app.html()).not.toContain('Text changed');
   } finally { vi.useRealTimers(); }
 });
 
@@ -206,10 +208,10 @@ it('keeps the manual stale banner without auto rescan while a clean result exist
     app.input(sample);
     app.click('#clean');
     app.input(sample + ' Edit after cleaning.');
-    expect(app.html()).toContain('文本已修改，结果可能过期');
-    expect(app.html()).not.toContain('正在重新检测');
+    expect(app.html()).toContain('Text changed, results may be out of date');
+    expect(app.html()).not.toContain('checking again');
     vi.advanceTimersByTime(5000);
-    expect(app.html()).toContain('文本已修改，结果可能过期');
+    expect(app.html()).toContain('Text changed, results may be out of date');
   } finally { vi.useRealTimers(); }
 });
 
@@ -221,13 +223,13 @@ it('holds the debounced rescan while composing and restarts it on compositionend
     app.editor.listeners.compositionstart();
     app.input(sample + ' 组字中');
     vi.advanceTimersByTime(5000);
-    expect(app.html()).not.toContain('文本已修改');
+    expect(app.html()).not.toContain('Text changed');
     app.editor.listeners.compositionend();
-    expect(app.html()).toContain('文本已修改，正在重新检测');
+    expect(app.html()).toContain('Text changed, checking again');
     vi.advanceTimersByTime(699);
-    expect(app.html()).toContain('文本已修改，正在重新检测');
+    expect(app.html()).toContain('Text changed, checking again');
     vi.advanceTimersByTime(1);
-    expect(app.html()).not.toContain('文本已修改');
+    expect(app.html()).not.toContain('Text changed');
   } finally { vi.useRealTimers(); }
 });
 

@@ -1,0 +1,8 @@
+{
+  "slug": "privacy",
+  "title": "NoAITell Privacy Policy | NoAITell",
+  "h1": "NoAITell Privacy Policy",
+  "description": "Learn how NoAITell processes text locally and stores the free quota counter on your device.",
+  "body": "<p>Effective November 4, 2026. Text you paste into the cleaner is processed in your browser. NoAITell does not upload it, save it to an account, or use it for training. This release has no accounts, checkout, analytics scripts or cloud rewriting.</p><p>The free quota stores a date and cleaning count under noaitell:quota:v1 in localStorage. It does not store your draft. The counter is specific to this browser profile and origin. Clearing site data deletes it. If storage is blocked, cleaning cannot record a use and is unavailable; inspection still works.</p><p>Input and results remain in page memory while you work. Copying a result uses your device clipboard. Reloading closes that in-memory session. Browser extensions or operating system clipboard services follow their own settings.</p><p>Cloudflare Pages serves the site and may process ordinary request information such as IP addresses and user agents according to its hosting policies. External source links take you to sites with separate privacy policies. No source link receives the text you pasted.</p><p>Payment processing through Creem is planned for a later release. This policy will be updated before account or payment features are introduced. For a privacy issue, please use the issue tracker linked from the project repository, and omit personal or sensitive draft text.</p>",
+  "tool": false
+}

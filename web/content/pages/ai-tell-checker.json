@@ -1,0 +1,8 @@
+{
+  "slug": "ai-tell-checker",
+  "title": "AI Tell Checker: Review Writing Patterns | NoAITell",
+  "h1": "AI Tell Checker: Review Writing Patterns",
+  "description": "Review formulaic writing patterns and formatting locally without making authorship claims.",
+  "body": "<p>An AI tell checker highlights recurring expressions and structures that may deserve an edit. It does not identify who wrote a document. Human writers use common transitions, parallel phrasing and punctuation too.</p><p>Paste a draft below and inspect each explanation. Sentence patterns are review suggestions rather than automatic edits. You can ignore a finding that fits the context, preserve your quotations, and clean selected formatting separately.</p><p>Counts and pattern density describe the rules matched in this draft. They do not represent an AI probability. Short text is shown as counts only. Invisible characters are counted in the summary, while readable patterns can be highlighted in context.</p><p>For a natural revision, add concrete information, verify claims and remove repetition. Keep the tone appropriate to your audience. Use the result comparison to inspect cleanup before copying. No text leaves your browser.</p>",
+  "tool": true
+}
