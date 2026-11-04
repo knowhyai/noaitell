@@ -22,7 +22,7 @@ export const rules:Rule[]=[
  rule('EN12','en','high','Testament phrase.',rx(/\ba testament to\b/i,'A testament to'),false,[{text:'It is a testament to support.',matches:true},{text:'It proves support.',matches:false}]),
  rule('EN13','en','medium','Whether you are framing.',rx(/^\s*whether you(?:'re| are)\b.*\b(?:or|and)\b/i,'Whether you are'),false,[{text:"Whether you're a student or professional, it helps.",matches:true},{text:'Students can use it.',matches:false}]),
  rule('ZH03','zh','medium','排比递进。',rx(/是[^，。]{1,15}[，,]是[^，。]{1,15}[，,]更是/,'排比递进'),false,[{text:'它是一种工具，是一种习惯，更是一种思维方式。',matches:true},{text:'它是一种工具。',matches:false}]),
- rule('ZH07','zh','medium','重复段首模板。',rx(/首先要/,'重复段首'),false,[{text:'首先要行动。',matches:true},{text:'行动吧。',matches:false}]),
+ rule('ZH07','zh','medium','重复段首模板：≥3 个相邻段落以「首先要/其次要/最后要」等固定框架展开，请人工确认是否为模板化展开；操作教程、步骤说明等真实逻辑顺序豁免（裸过渡词「首先/其次/最后」不在本规则内）。',rx(/^\s*(?:首先需要|其次需要|再次需要|最后需要|首先要|其次要|再次要|最后要)/,'重复段首'),false,[{text:'首先要明确目标，再谈执行。',matches:true},{text:'我们首先要考虑成本。',matches:false}]),
  rule('ZH08','zh','medium','四字格三连。',rx(/[\u4e00-\u9fff]{4}[、，][\u4e00-\u9fff]{4}[、，][\u4e00-\u9fff]{4}/,'四字格三连'),false,[{text:'提质增效、降本增效、协同联动',matches:true},{text:'提质增效、协同联动',matches:false}]),
  rule('ZH09','zh','medium','黑话/官样词。',rx(/(?:赋能|抓手|闭环|颗粒度|拉通|沉淀|打法|组合拳|致力于打造|深度融合)/,'黑话词'),false,[{text:'通过数据赋能业务，形成增长闭环。',matches:true},{text:'通过数据帮助业务。',matches:false}])
 ];

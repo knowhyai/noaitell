@@ -31,7 +31,7 @@
     rule("EN12", "en", "high", "Testament phrase.", rx(/\ba testament to\b/i, "A testament to"), false, [{ text: "It is a testament to support.", matches: true }, { text: "It proves support.", matches: false }]),
     rule("EN13", "en", "medium", "Whether you are framing.", rx(/^\s*whether you(?:'re| are)\b.*\b(?:or|and)\b/i, "Whether you are"), false, [{ text: "Whether you're a student or professional, it helps.", matches: true }, { text: "Students can use it.", matches: false }]),
     rule("ZH03", "zh", "medium", "排比递进。", rx(/是[^，。]{1,15}[，,]是[^，。]{1,15}[，,]更是/, "排比递进"), false, [{ text: "它是一种工具，是一种习惯，更是一种思维方式。", matches: true }, { text: "它是一种工具。", matches: false }]),
-    rule("ZH07", "zh", "medium", "重复段首模板。", rx(/首先要/, "重复段首"), false, [{ text: "首先要行动。", matches: true }, { text: "行动吧。", matches: false }]),
+    rule("ZH07", "zh", "medium", "重复段首模板：≥3 个相邻段落以「首先要/其次要/最后要」等固定框架展开，请人工确认是否为模板化展开；操作教程、步骤说明等真实逻辑顺序豁免（裸过渡词「首先/其次/最后」不在本规则内）。", rx(/^\s*(?:首先需要|其次需要|再次需要|最后需要|首先要|其次要|再次要|最后要)/, "重复段首"), false, [{ text: "首先要明确目标，再谈执行。", matches: true }, { text: "我们首先要考虑成本。", matches: false }]),
     rule("ZH08", "zh", "medium", "四字格三连。", rx(/[\u4e00-\u9fff]{4}[、，][\u4e00-\u9fff]{4}[、，][\u4e00-\u9fff]{4}/, "四字格三连"), false, [{ text: "提质增效、降本增效、协同联动", matches: true }, { text: "提质增效、协同联动", matches: false }]),
     rule("ZH09", "zh", "medium", "黑话/官样词。", rx(/(?:赋能|抓手|闭环|颗粒度|拉通|沉淀|打法|组合拳|致力于打造|深度融合)/, "黑话词"), false, [{ text: "通过数据赋能业务，形成增长闭环。", matches: true }, { text: "通过数据帮助业务。", matches: false }])
   ];
@@ -224,6 +224,77 @@
   var normalizePunctuation = (text) => text.replace(/[“”]/g, '"').replace(/[‘’]/g, "'").replace(/…/g, "...").replace(/[—–]/g, "-");
   var mathematical = (text) => !new RegExp("\\p{L}", "u").test(text) && /[\p{N}\p{Sm}]/u.test(text);
 
+  // ../web/src/engine/frames.ts
+  var ZH07_MIN_ADJACENT = 3;
+  var ZH07_FRAME = /(?:首先需要|其次需要|再次需要|最后需要|首先要|其次要|再次要|最后要)/;
+  var TUTORIAL_CUE = /(?:打开|点击|双击|长按|滑动|拖动|勾选|输入|粘贴|下载|上传|安装|卸载|登录|登出|重启|刷新|保存|填写|弹窗|按钮|菜单|页面|输入框|快捷键|网址)/;
+  var STEP_CUE = /第[一二三四五六七八九十\d]+步|步骤[一二三四五六七八九十\d]/;
+  function repeatedOpeningHits(body, original2) {
+    const out = [];
+    let run = [];
+    const flush = () => {
+      const stepWise = run.some((p) => STEP_CUE.test(p.paragraph));
+      const tutorial = run.every((p) => TUTORIAL_CUE.test(p.firstSentence));
+      if (run.length >= ZH07_MIN_ADJACENT && !stepWise && !tutorial) out.push(...run.map(({ start, end }) => ({ start, end, label: "重复段首模板" })));
+      run = [];
+    };
+    for (const match of body.matchAll(/[^\n]+(?:\n(?![ \t]*\n)[^\n]+)*/g)) {
+      const para = match[0];
+      const lead = /^[ \t]*/.exec(para)[0].length;
+      const frame = ZH07_FRAME.exec(para.slice(lead));
+      if (!frame) {
+        flush();
+        continue;
+      }
+      const start = match.index + lead + frame.index;
+      const lineStart = original2.lastIndexOf("\n", start - 1) + 1;
+      if (!/^[ \t]*$/.test(original2.slice(lineStart, start))) {
+        flush();
+        continue;
+      }
+      run.push({ start, end: start + frame[0].length, firstSentence: para.slice(lead).split(/[。！？\n]/)[0], paragraph: para });
+    }
+    flush();
+    return out;
+  }
+  var ZH_RANK = /* @__PURE__ */ new Map([["首先", 1], ["其次", 2], ["再次", 3], ["然后", 3]]);
+  var ZH_NUMERAL = new Map([...Array.from("一二三四五六七八九十")].map((c, i) => [c, i + 1]));
+  var ZH_MARKER = /首先|其次|然后|最后(?![一次天月年日名轮批款项条页个])|(?<![^\n。！？；，、：\s])(?:再次|第[一二三四五六七八九十](?![一次天月年日名轮批款项条页章步]))/g;
+  var ZH_ORDINAL = /^第[一二三四五六七八九十]$/;
+  var EN_RANK = /* @__PURE__ */ new Map([["first", 1], ["firstly", 1], ["second", 2], ["secondly", 2], ["third", 3], ["thirdly", 3], ["fourth", 4], ["fourthly", 4], ["fifth", 5], ["fifthly", 5], ["finally", 99], ["lastly", 99]]);
+  var EN_MARKER = /\b(?:firstly|first|secondly|second|thirdly|third|fourthly|fourth|fifthly|fifth|lastly|finally)\b/gi;
+  var EN_ORDINAL = /(?:first|firstly|second|secondly|third|thirdly|fourth|fourthly|fifth|fifthly)/i;
+  var TERMINAL_RANK = 99;
+  function scaffoldChainCount(body) {
+    const chains = (ranks) => {
+      let count = 0, run = 0, last = 0;
+      for (const rank of ranks) {
+        if (rank > last) {
+          run++;
+          last = rank;
+          if (run === 3) {
+            count++;
+            run = 0;
+            last = 0;
+          }
+        } else {
+          run = 1;
+          last = rank;
+        }
+      }
+      return count;
+    };
+    const zh = [];
+    for (const match of body.matchAll(ZH_MARKER)) zh.push(ZH_ORDINAL.test(match[0]) ? ZH_NUMERAL.get(match[0][1]) : ZH_RANK.get(match[0]) ?? TERMINAL_RANK);
+    const en = [];
+    for (const match of body.matchAll(EN_MARKER)) {
+      if (match.index && !/[\n.!?;:]\s*$/.test(body.slice(0, match.index))) continue;
+      if (EN_ORDINAL.test(match[0]) && !/^\s*[,:]/.test(body.slice(match.index + match[0].length))) continue;
+      en.push(EN_RANK.get(match[0].toLowerCase()) ?? TERMINAL_RANK);
+    }
+    return chains(zh) + chains(en);
+  }
+
   // ../web/src/engine/detect.ts
   var make = (ruleId, category, confidence, start, end, text, label, why, cleanable) => ({
     id: `${ruleId}:${start}:${end}`,
@@ -303,9 +374,10 @@
     for (const paragraph of body.matchAll(/[^\n]+(?:\n(?![ \t]*\n)[^\n]+)*/g)) {
       if (paragraph[0].trim()) lastParagraph = paragraph.index;
     }
+    const zh07 = rules.find((r) => r.id === "ZH07");
     for (const part of segs.filter((s) => !s.excluded)) {
       for (const sentence of sentences(part.text, part.start)) {
-        for (const rule2 of rules.filter((r) => r.enabled && r.language === sentence.language)) {
+        for (const rule2 of rules.filter((r) => r.enabled && r.language === sentence.language && r.id !== "ZH07")) {
           for (const hit of rule2.matcher(sentence.text)) {
             const start = sentence.start + hit.start, end = sentence.start + hit.end;
             if (rule2.id === "ZH06" && start < lastParagraph) continue;
@@ -313,6 +385,9 @@
           }
         }
       }
+    }
+    if (zh07?.enabled) for (const hit of repeatedOpeningHits(body, text)) {
+      found.push(make("ZH07", "pattern", zh07.confidence, hit.start, hit.end, text.slice(hit.start, hit.end), hit.label, `${hit.start + 1} → ${hit.label}：${zh07.description}`, false));
     }
     const unique = [...new Map(found.map((f) => [`${f.start}:${f.end}:${f.ruleId}`, f])).values()].map((f) => ({ ...f, ignored: ignored2.has(f.id) }));
     const active = unique.filter((f) => !f.ignored);
@@ -324,7 +399,7 @@
     const formatHits = active.filter((f) => f.category === "format").length;
     const reviewCount = active.filter((f) => !f.cleanable).length;
     const invisibleCount = active.filter((f) => f.ruleId === "CHAR01").length;
-    return { findings: unique, visibleChars: visible, patternHits, formatHits, reviewCount, invisibleCount, density: visible >= 150 ? Math.round(patternHits / visible * 1e3 * 10) / 10 : null };
+    return { findings: unique, visibleChars: visible, patternHits, formatHits, reviewCount, invisibleCount, scaffoldChains: scaffoldChainCount(body), density: visible >= 150 ? Math.round(patternHits / visible * 1e3 * 10) / 10 : null };
   }
 
   // ../web/src/engine/clean.ts
