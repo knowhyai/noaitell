@@ -114,7 +114,7 @@ const esc = s => s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',
 export function renderFAQs(p) {
  if (!p.faqs?.length) return '';
  const schema = {'@context':'https://schema.org','@type':'FAQPage',mainEntity:p.faqs.map(f => ({'@type':'Question',name:f.question,acceptedAnswer:{'@type':'Answer',text:f.answer}}))};
- return `<section class="faq"><h2>Frequently asked questions</h2>${p.faqs.map(f=>`<h3>${esc(f.question)}</h3><p>${esc(f.answer)}</p>`).join('')}</section><script type="application/ld+json">${JSON.stringify(schema).replace(/</g,'\\u003c')}</script>`;
+ return `<section class="faq"><h2>Frequently asked questions</h2>${p.faqs.map(f=>`<details class="faq-card"><summary>${esc(f.question)}<span class="faq-icon" aria-hidden="true">+</span></summary><div class="faq-answer"><p>${f.answerHtml ?? esc(f.answer)}</p></div></details>`).join('')}</section><script type="application/ld+json">${JSON.stringify(schema).replace(/</g,'\\u003c')}</script>`;
 }
 function localeLink(pages, p, slug) {
   const sameLocale = pages.find(q => (q.locale ?? 'en') === (p.locale ?? 'en') && pageKey(q) === slug);

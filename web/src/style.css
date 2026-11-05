@@ -376,3 +376,57 @@ header,main,.site-nav,.site-heading,.guide,.page-intro,.page-content,body>footer
 button,.site-nav a,.page-content a{min-width:44px}
 a.primary,.page-content a.primary{display:inline-flex;align-items:center;justify-content:center;color:var(--card);text-decoration:none}
 input[type=email]{min-height:44px;max-width:100%;border:1px solid var(--border);background:var(--card);padding:8px}
+
+/* Long-copy hierarchy, using the shared page shell and its existing gutters. */
+.page-content>section{margin-block:64px}
+.page-content>section>h2{margin-top:0;margin-bottom:16px}
+.page-content p{max-width:65ch}
+.page-content .section-lead{margin:0 0 28px;color:var(--muted)}
+.cap-grid,.tell-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px}
+.cap-card,.tell-card{min-width:0;padding:24px;background:var(--card);border:1px solid var(--border);border-radius:6px}
+.page-content .cap-card h3,.page-content .tell-card h3,.pricing-columns h3{font:400 23px/1.3 var(--serif);margin:0 0 18px}
+.tell-card p{font-size:15px;margin:0 0 16px}
+.tell-card del{color:var(--accent);font-size:13px}
+.tell-card small{color:var(--muted);font-size:13px}
+.check-list,.cross-list,.pro-tiers{list-style:none;padding:0;margin:0;font-size:15px}
+.check-list li,.cross-list li{position:relative;padding-left:23px;margin:12px 0}
+.check-list li:before,.cross-list li:before{position:absolute;left:0;color:var(--accent);content:'✓'}
+.cross-list li:before{content:'✕'}
+.page-content .fine-print{font-size:13px;line-height:1.6;color:var(--muted);margin-block:18px}
+.page-content .fine-print a,.faq-answer a{display:inline;min-height:0;min-width:0}
+.faq-card{position:relative;background:var(--card);border:1px solid var(--border);border-radius:6px;margin:12px 0;box-shadow:0 4px 10px #59412a08;transition:border-color .2s,box-shadow .2s}
+.faq-card[open]{border-left:4px solid var(--accent);box-shadow:0 6px 16px #59412a10}
+.faq-card summary{display:flex;align-items:center;justify-content:space-between;gap:20px;cursor:pointer;list-style:none;padding:22px 24px;font:400 21px/1.4 var(--serif)}
+.faq-card summary::-webkit-details-marker{display:none}
+.faq-card summary:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+.faq-icon{flex:0 0 auto;color:var(--accent);font:400 26px/1 var(--font);transition:transform .2s}
+.faq-card[open] .faq-icon{transform:rotate(45deg)}
+.faq-answer{padding:0 24px 22px;color:var(--muted)}
+.faq-answer p{margin:0}
+.faq-card[open] .faq-answer{animation:faq-reveal .2s ease-out}
+@keyframes faq-reveal{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:translateY(0)}}
+/* Animate native disclosure height where supported; retain native behavior elsewhere. */
+@supports (interpolate-size:allow-keywords){
+ .faq-card{interpolate-size:allow-keywords}
+ .faq-card::details-content{height:0;overflow:clip;transition:height .2s,content-visibility .2s;transition-behavior:allow-discrete}
+ .faq-card[open]::details-content{height:auto}
+}
+.pricing-card{padding:32px;border-radius:6px}
+.pricing-columns{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:32px;margin:28px 0}
+.pricing-columns>div{min-width:0}
+.pricing-columns>div+div{border-left:1px solid var(--border);padding-left:32px}
+.coming-soon{display:inline-block;vertical-align:middle;font:500 11px/1.5 var(--font);color:var(--accent);border:1px solid var(--border);border-radius:20px;padding:3px 9px;margin-left:8px}
+.pro-tiers li{margin:10px 0;color:var(--muted)}
+.pro-tiers strong{color:var(--text);font-size:20px}
+@media(max-width:767px){
+ .cap-grid,.tell-grid,.pricing-columns{grid-template-columns:1fr}
+ .page-content>section{margin-block:44px}
+ .cap-card,.tell-card,.pricing-card{padding:22px}
+ .pricing-columns>div+div{border-left:0;border-top:1px solid var(--border);padding:24px 0 0}
+ .faq-card summary{padding:18px;font-size:19px}
+ .faq-answer{padding:0 18px 18px}
+}
+@media(prefers-reduced-motion:reduce){
+ .faq-card,.faq-icon,.faq-card::details-content{transition:none}
+ .faq-card[open] .faq-answer{animation:none}
+}

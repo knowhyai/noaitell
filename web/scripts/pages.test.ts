@@ -35,8 +35,11 @@ it('ships social cards, contact details, real static tool content and matching F
   if(p.faqs?.length) {
    const schema=JSON.parse(html.match(/<script type="application\/ld\+json">(.*?)<\/script>/s)![1]);
    expect(schema['@type']).toBe('FAQPage');
-   expect(schema.mainEntity.map(q=>({question:q.name,answer:q.acceptedAnswer.text}))).toEqual(p.faqs);
-   for(const f of p.faqs) {expect(html).toContain(f.question);expect(html).toContain(f.answer);}
+   expect(schema.mainEntity.map(q=>({question:q.name,answer:q.acceptedAnswer.text}))).toEqual(p.faqs.map(({question,answer})=>({question,answer})));
+   expect(html.match(/<details class="faq-card">/g)).toHaveLength(p.faqs.length);
+   expect(html).not.toContain('<details class="faq-card" open');
+   for(const f of p.faqs) {expect(html).toContain(f.question);expect(html).toContain(f.answerHtml ?? f.answer);
+    if(f.answerHtml) expect(f.answerHtml.replace(/<[^>]+>/g,'')).toBe(f.answer);}
   }
  }
  expect(readFileSync(resolve(root,'dist/sitemap.xml'),'utf8').match(/<url>/g)).toHaveLength(17);
@@ -47,4 +50,21 @@ it('offers live Free access and a valid Pro email notification form', () => {
  expect(html).toContain('type="email"');expect(html).toContain('required');
  expect(html).toContain('data-pro-notify');expect(html).not.toContain('Coming soon');
  for(const price of ['$4.99','$19.9','$199'])expect(html).toContain(price);
+});
+it('keeps home hierarchy, linked watermark details and preview pricing aligned', () => {
+ const home=pages.find(p=>p.slug==='');
+ const source=JSON.parse(readFileSync(resolve(root,'content/pages/home.json'),'utf8'));
+ for(const field of ['body','faqs','pricingCard']) expect(home[field]).toEqual(source[field]);
+ const html=readFileSync(resolve(root,'dist/index.html'),'utf8');
+ expect(home.body.match(/class="cap-card"/g)).toHaveLength(3);
+ expect(home.body.match(/class="tell-card"/g)).toHaveLength(3);
+ expect(home.body.match(/class="steps"/g)).toHaveLength(1);
+ expect(home.body).not.toContain('<h2>Contact</h2>');
+ expect(home.body).not.toContain('U+200B');
+ expect(html).toContain('U+200B U+034F U+2060 U+200B');
+ expect(home.faqs.find(f=>f.answerHtml)?.answerHtml.match(/<a href=/g)).toHaveLength(5);
+ expect(home.pricingCard).toContain('class="pricing-columns"');
+ expect(home.pricingCard).toContain('Coming soon');
+ expect(home.pricingCard.match(/href=/g)).toHaveLength(1);
+ for(const price of ['$4.99','$19.9','$199']) expect(home.pricingCard).toContain(price);
 });
