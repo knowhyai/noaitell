@@ -41,5 +41,5 @@ it('includes all canonical pages in sitemap, policies, favicon and redirects', (
   expect(read('dist/_redirects')).toContain('/ai-text-cleaner/ / 301');
   expect(read('dist/robots.txt')).toContain('Sitemap: https://noaitell.com/sitemap.xml');
   expect(read('dist/favicon.svg')).toContain('<svg');
-  expect(read('dist/pricing/index.html').match(/<button disabled/g)).toHaveLength(3);
+  expect(read('dist/pricing/index.html')).toContain('Free — use now');
 });

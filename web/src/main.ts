@@ -9,7 +9,7 @@ type Cat=keyof typeof categoryNames;
 const cats=Object.keys(categoryNames) as Cat[];
 const sixOptions=[['invisible','Remove invisible characters'],['markdown','Clean Markdown residue'],['typography','Normalize English punctuation'],['tracking','Remove tracking parameters'],['whitespace','Normalize whitespace'],['homoglyph','Normalize mixed-script lookalikes']] as Array<[keyof CleanOptions,string]>;
 const legendItems=[['format','Copy and formatting'],['typography','Typography and characters'],['pattern','Writing patterns'],['link','Link privacy']] as Array<[Cat,string]>;
-let original='', ignored=new Set<string>(), analysis:Analysis=analyze(''), opts:CleanOptions={...defaultOptions}, result='', preview=false, stale=false, showHighlights=true, activeTab:Tab='edit', openSections=new Set<Cat>(cats), cleanupOpen=false, navIndex:number|null=null, composing=false;
+let original=document.querySelector<HTMLTextAreaElement>('#static-editor')?.value || '', ignored=new Set<string>(), analysis:Analysis=analyze(''), opts:CleanOptions={...defaultOptions}, result='', preview=false, stale=false, showHighlights=true, activeTab:Tab='edit', openSections=new Set<Cat>(cats), cleanupOpen=false, navIndex:number|null=null, composing=false;
 let lastClean:CleanResult|null=null, rescanTimer:ReturnType<typeof setTimeout>|undefined;
 const RESCAN_DELAY=700;
 const app=document.querySelector<HTMLDivElement>('#app')!;
@@ -83,4 +83,4 @@ document.querySelector('#example')?.addEventListener('click',()=>{original=examp
 document.querySelectorAll<HTMLInputElement>('[data-option]').forEach(i=>i.onchange=()=>{opts[i.dataset.option as keyof CleanOptions]=i.checked;render()});document.querySelector('#clean')?.addEventListener('click',()=>doClean());document.querySelector('#high')?.addEventListener('click',()=>doClean(true));document.querySelector('#copy')?.addEventListener('click',()=>navigator.clipboard?.writeText(result));document.querySelector('#restore')?.addEventListener('click',()=>{result='';lastClean=null;preview=false;activeTab='edit';render()});
 app.onclick=onClickDelegated; app.onmouseover=onHover; app.onmouseout=onHoverOut;
 if(typeof window!=='undefined')window.onresize=syncScroll;}
-render();
+scan();

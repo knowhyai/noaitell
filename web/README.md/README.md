@@ -30,3 +30,10 @@ The free allowance is three cleanings per local calendar day, 500 segmented word
 per cleaning. Only the date and count are stored in localStorage; drafts are not saved.
 Scanning does not spend an allowance. Pro checkout is disabled. No account, webhook,
 D1 database, payment credentials, or text upload endpoint is included.
+
+Optional measurement (static build): set `VITE_GA4_ID`, `VITE_CLARITY_ID`, and/or
+`VITE_GSC_VERIFICATION` in Cloudflare Pages build environment variables, then
+rebuild. See `.env.example`. Empty values emit no corresponding tags or external
+scripts. No identifiers are included by default. The cleaner is masked from
+Clarity recordings. Pro notification requests open the visitor's email app;
+there is no backend or website email database.

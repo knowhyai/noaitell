@@ -23,3 +23,28 @@ it('contains substantive guide drafts and complete sitemap links', () => {
  for(const p of pages) expect(sitemap).toContain(`https://noaitell.com${pathFor(p)}`);
  for(const slug of guides) {const p=pages.find(p=>p.slug===slug);expect(p).toBeTruthy();expect(p.body.replace(/<[^>]+>/g,' ').split(/\s+/).filter(Boolean).length).toBeGreaterThanOrEqual(300);}
 });
+it('ships social cards, contact details, real static tool content and matching FAQ schema', () => {
+ for (const p of pages) {
+  const html=readFileSync(resolve(root,'dist',p.slug,'index.html'),'utf8');
+  for (const key of ['og:title','og:description','og:url','og:type']) expect(html).toContain(`property="${key}"`);
+  expect(html).toContain('name="twitter:card"');
+  expect(html).toContain(`property="og:url" content="https://noaitell.com${pathFor(p)}"`);
+  expect(html.match(/<footer[^>]*>(.*?)<\/footer>/s)?.[1]).toContain('mailto:noaitell@knowhy.net');
+  expect(html).not.toContain('Local cleaner loading');
+  if(p.tool) { expect(html).toContain('id="static-editor"'); expect(html).toContain('data-clarity-mask="true"'); }
+  if(p.faqs?.length) {
+   const schema=JSON.parse(html.match(/<script type="application\/ld\+json">(.*?)<\/script>/s)![1]);
+   expect(schema['@type']).toBe('FAQPage');
+   expect(schema.mainEntity.map(q=>({question:q.name,answer:q.acceptedAnswer.text}))).toEqual(p.faqs);
+   for(const f of p.faqs) {expect(html).toContain(f.question);expect(html).toContain(f.answer);}
+  }
+ }
+ expect(readFileSync(resolve(root,'dist/sitemap.xml'),'utf8').match(/<url>/g)).toHaveLength(17);
+});
+it('offers live Free access and a valid Pro email notification form', () => {
+ const html=readFileSync(resolve(root,'dist/pricing/index.html'),'utf8');
+ expect(html).toContain('href="/#app">Free — use now');
+ expect(html).toContain('type="email"');expect(html).toContain('required');
+ expect(html).toContain('data-pro-notify');expect(html).not.toContain('Coming soon');
+ for(const price of ['$4.99','$19.9','$199'])expect(html).toContain(price);
+});
