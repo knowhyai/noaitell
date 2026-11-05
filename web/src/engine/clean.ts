@@ -6,7 +6,7 @@ import type { CleanOptions, CleanResult } from './types';
 
 export const defaultOptions: CleanOptions = { invisible: true, markdown: true, typography: false, tracking: true, whitespace: true, homoglyph: false, plainText: true };
 
-export function clean(original: string, options: CleanOptions): CleanResult {
+export function clean(original: string, options: CleanOptions, ignoredIds?: ReadonlySet<string>): CleanResult {
   type Edit = CleanResult['changes'][number] & { ruleIds: string[] };
   const edits: Edit[] = [];
   const findings = analyze(original).findings;
@@ -80,7 +80,15 @@ export function clean(original: string, options: CleanOptions): CleanResult {
       removeDelimiter(end - 2, end);
     }
   }
-  const ordered = edits.sort((a, b) => a.start - b.start || a.end - b.end);
+  // Ignored findings (ids are ruleId:start:end) suppress any overlapping edit that
+  // would apply one of their rules, covering link projections and tracking strips too.
+  const ignored = [...ignoredIds ?? []].map(id => {
+    const [ruleId, start, end] = id.split(':');
+    return { ruleId, start: +start, end: +end };
+  });
+  const ordered = edits.filter(edit => !ignored.some(f =>
+    edit.ruleIds.includes(f.ruleId) && edit.start < f.end && edit.end > f.start
+  )).sort((a, b) => a.start - b.start || a.end - b.end);
   let text = '', at = 0;
   const applied: Edit[] = [];
   for (const edit of ordered) {

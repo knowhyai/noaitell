@@ -41,6 +41,10 @@ const samples = [
   `It is not just software, but a tool. ${'x'.repeat(200)} **bold** **again**`, // 密度口径
   '数据显示，值得注意的是趋势正在变化。',  // 句中 ZH05
   'A\u200BB\u200BC',                      // 逐处计数
+  '首先要把目标拆小。\n\n其次要保持每天复盘。\n\n最后要坚持长期跟踪。', // 规则加强批:ZH07 骨架(实验规则默认关闭,应零命中)+ 中文链统计
+  '第一步要准备环境。\n第二步要安装依赖。\n第三步要运行测试。',       // 规则加强批:第X步计数用法不成链、教程不命中
+  'First, define the goal.\nSecond, pick the metric.\nThird, review weekly.', // 规则加强批:英文链统计
+  'First prize went to Alice. Second prize went to Bob. Finally, the prizes were distributed.', // 规则加强批追加:序数词修饰名词不成链
   '',                                     // 空文本
   '   \n\n  ',                            // 纯空白
   'Plain text with no tells at all, just a normal sentence.',        // 零命中
@@ -79,6 +83,15 @@ assert.equal(zero.findings.length, 0, '零命中样本文本不应产生命中')
 assert.equal(web.analyze('').findings.length, 0);
 assert.match(readFileSync(new URL('../popup.js', import.meta.url), 'utf8'), /未发现当前规则覆盖的问题/);
 checks += 3;
+
+// 3.5 规则加强批:ZH07 实验规则默认关闭(骨架文本零命中);scaffoldChains 只计数(中英链各计 1,第X步用法不计)。
+const skeletonText = '首先要把目标拆小。\n\n其次要保持每天复盘。\n\n最后要坚持长期跟踪。';
+assert.equal(web.analyze(skeletonText).findings.length, 0, 'ZH07 实验规则默认关闭,骨架文本不应产生命中');
+assert.equal(web.analyze(skeletonText).scaffoldChains, 1, '中文序列骨架应计 1 条链');
+assert.equal(web.analyze('第一步要准备环境。\n第二步要安装依赖。\n第三步要运行测试。').scaffoldChains, 0, '第X步计数用法不应成链');
+assert.equal(web.analyze('First, define the goal.\nSecond, pick the metric.\nThird, review weekly.').scaffoldChains, 1, '英文序列骨架应计 1 条链');
+assert.equal(web.analyze('First prize went to Alice. Second prize went to Bob. Finally, the prizes were distributed.').scaffoldChains, 0, '序数词修饰名词(first prize)不应成链');
+checks += 5;
 
 // 4. 打包完整性:popup.js 内联了全部启用句式规则;popup.html 引用 popup.js;manifest 引用的图标存在。
 const popupJs = readFileSync(new URL('../popup.js', import.meta.url), 'utf8');

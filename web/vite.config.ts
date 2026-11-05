@@ -1,7 +1,16 @@
-import { defineConfig } from 'vite';
+import { defineConfig } from 'vitest/config';
+import { loadEnv } from 'vite';
+import { analyticsTags } from './scripts/analytics.mjs';
 import { resolve } from 'node:path';
-export default defineConfig({
-  build: { rollupOptions: { input: {
-    main: resolve(__dirname, 'index.html'), cleaner: resolve(__dirname, 'ai-text-cleaner/index.html'), checker: resolve(__dirname, 'ai-tell-checker/index.html'), dashes: resolve(__dirname, 'remove-em-dashes/index.html'), chatgpt: resolve(__dirname, 'chatgpt-watermark/index.html'), claude: resolve(__dirname, 'claude-watermark/index.html'), gemini: resolve(__dirname, 'gemini-watermark/index.html')
-  }}},
-});
+import { pages, generatePages, root, localePagePath } from './scripts/pages.mjs';
+generatePages();
+export default defineConfig(({ mode }) => ({
+  plugins: [{ name: 'optional-analytics', transformIndexHtml() { return analyticsTags(loadEnv(mode, root, 'VITE_')); } }],
+  test: { globalSetup: [resolve(root, 'scripts/test-setup.mjs')] },
+  build: { rollupOptions: { input: Object.fromEntries(pages.map(p => {
+    const locale = p.locale || 'en';
+    const key = (locale === 'en' ? '' : locale + '-') + (p.slug || 'home');
+    const dir = localePagePath(locale, p.slug).replace(/^\/|\/$/g, '');
+    return [key, resolve(root, dir, 'index.html')];
+  })) } },
+}));

@@ -1,4 +1,4 @@
-export const invisible = /[\u200B\u2060\u00AD\uFEFF\u200E\u200F\u202A-\u202E\u2066-\u2069\u200C\u200D\u00A0\u202F\u2000-\u200A\u3000]/g;
+export const invisible = /\u200B\u034F\u2060\u200B|[\u200B\u2060\u00AD\uFEFF\u200E\u200F\u202A-\u202E\u2066-\u2069\u200C\u200D\u00A0\u202F\u2000-\u200A\u3000]/g;
 
 export function meaningfulJoiner(text: string, index: number): boolean {
   const before = [...text.slice(0, index)];
