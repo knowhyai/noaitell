@@ -130,7 +130,7 @@ it('collapses cleanup options into a one-line summary that expands on demand', a
   app.tap({ cleanup: 'toggle' });
   expect(app.html()).toContain('data-option');
   expect(app.html()).toContain('Collapse');
-  expect(app.html()).toContain('Clean selected');
+  expect(app.html()).toContain('Clean text');
   app.tap({ cleanup: 'toggle' });
   expect(app.html()).not.toContain('data-option');
 });
@@ -284,4 +284,12 @@ it('refuses oversized cleaning without consuming an allowance', async () => {
   app.input('Short draft');
   app.click('#clean');
   expect(app.html()).toContain('2 free uses left today');
+});
+
+it('guides empty input without placeholder statistics and keeps cleaning under the editor', async () => {
+  const app = await mount();
+  expect(app.html()).toContain('Paste text to see pattern density and findings');
+  expect(app.html()).not.toContain('<strong>—</strong>');
+  expect(app.html()).toContain('Processed in your browser · Not uploaded · 3 free uses a day · No sign-up');
+  expect(app.html().indexOf('id="clean"')).toBeLessThan(app.html().indexOf('<aside class="controls"'));
 });
