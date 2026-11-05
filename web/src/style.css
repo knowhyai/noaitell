@@ -51,6 +51,7 @@
   --bg:#F6F1E7; --card:#FFFDFA; --border:#D9CFC0; --border-soft:#F9F4ED;
   --text:#302E2A; --body:#514B43; --muted:#746B60; --faint:#746B60;
   --accent:#B34335;
+  --page-width:1120px; --page-gutter:clamp(20px,4vw,48px);
   --format-bg:#F8EEE8; --format-fg:#B34335;
   --pattern-bg:#F8EEE8; --pattern-fg:#B34335;
   --typography-bg:#F8EEE8; --typography-fg:#B34335;
@@ -267,8 +268,8 @@ button:disabled{cursor:not-allowed;opacity:.55}
 .page-intro,.page-content { max-width:1000px; margin:24px auto; padding:0 24px; line-height:1.75; }
 .page-content p { margin:18px 0; }
 .page-content a,.quota-note a { color:#B34335; text-decoration:underline; }
-.guide-links { display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:10px 24px; padding-left:20px; }
-.plans { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:20px; }
+.guide-links { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(260px,100%),1fr)); gap:10px 24px; padding-left:20px; }
+.plans { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(220px,100%),1fr)); gap:20px; }
 .plans section { padding:20px; border:1px solid #D9CFC0; border-radius:12px; }
 .quota-note { padding:10px 0; }
 
@@ -280,24 +281,29 @@ button,a,input,summary{touch-action:manipulation}
 button,summary{min-height:44px}
 a{color:var(--accent)}
 :focus-visible{outline-color:var(--accent)}
-.site-nav{max-width:1120px;margin:auto;padding:0;gap:28px;min-height:80px;border-bottom:1px solid var(--text)}
-.site-nav a{display:inline-flex;align-items:center;min-height:44px;text-decoration:none;color:var(--text)}
+.site-nav{padding-block:0;flex-wrap:wrap;gap:0 clamp(12px,2.5vw,28px);min-height:80px;border-bottom:1px solid var(--text)}
+.site-nav a{min-width:0;flex-shrink:0;display:inline-flex;align-items:center;min-height:44px;text-decoration:none;color:var(--text)}
 .site-nav .brand{margin-right:auto;font:600 26px var(--serif);letter-spacing:-1px}
-.brand svg{width:24px;height:28px;color:var(--accent);margin-right:9px}
-.page-intro,.page-content{max-width:1120px;padding:0;margin:32px auto;line-height:1.65}
+.brand svg{flex-shrink:0;width:24px;height:28px;color:var(--accent);margin-right:9px}
+.page-intro,.page-content{margin:32px auto;line-height:1.65}
 h1{font:400 clamp(44px,6vw,76px)/1.05 var(--serif);letter-spacing:-.04em;margin:0 0 20px}
-.hero-title{font-size:72px;margin:0;line-height:1.02}
+.hero-title{font-size:clamp(48px,6vw,72px);margin:0;line-height:1.02}
 .hero-title em{color:var(--accent);font-weight:400}
-.page-intro:has(.intro-example){display:grid;grid-template-columns:1.15fr 1fr;gap:24px 60px;align-items:center;margin-top:28px;margin-bottom:20px}
+.page-intro:has(.intro-example){display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:24px 60px;align-items:center;margin-top:28px;margin-bottom:20px}
 .page-intro>p{font-size:18px;color:var(--body);margin:0;max-width:450px}
-.intro-example{grid-column:1/-1;display:grid;grid-template-columns:1.15fr 1fr;gap:8px 44px;border-top:1px solid var(--border);border-bottom:1px solid var(--border);padding:12px 0}
+.intro-example{grid-column:1/-1;display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:8px 44px;border-top:1px solid var(--border);border-bottom:1px solid var(--border);padding:12px 0}
 .intro-example strong{font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
 .intro-example>div:nth-child(2) strong{color:var(--accent)}
 .intro-example p{font:400 18px/1.5 var(--serif);margin:4px 0}
 .intro-example del{text-decoration:line-through var(--accent) 2px;color:var(--muted)}
 .intro-example small{grid-column:1/-1;font-size:12px;color:var(--muted)}
 .intro-example small em{font:italic 14px var(--serif);color:var(--accent);margin-right:6px}
-#app main{max-width:1120px;padding:0}
+/* Shared outer shells: border-box includes the gutter at every viewport width. */
+header,main,.site-nav,.site-heading,.guide,.page-intro,.page-content,body>footer,#app main{
+ width:100%;max-width:var(--page-width);margin-inline:auto;padding-inline:var(--page-gutter);
+}
+.page-intro,.page-content{overflow-wrap:anywhere}
+.workspace>*,.page-intro>*,.intro-example>*,.controls-inner>*{min-width:0}
 #app .page-note{display:none}
 .quota-note{background:none;border:0;padding:0;font-size:12px;color:var(--muted);margin:0 0 10px}
 .workspace{grid-template-columns:1fr;gap:24px}
@@ -333,7 +339,6 @@ h1{font:400 clamp(44px,6vw,76px)/1.05 var(--serif);letter-spacing:-.04em;margin:
 .pricing-card{padding:24px;background:var(--card);border:1px solid var(--border)}
 .pricing-card h2{margin-top:0}
 @media(max-width:767px){
- .site-nav,.page-intro,.page-content,#app main{margin-left:24px;margin-right:24px;padding:0}
  .site-nav{min-height:68px;gap:18px}
  .site-nav .brand{font-size:23px}
  .site-nav a{font-size:13px}
