@@ -35,5 +35,56 @@ Optional measurement (static build): set `VITE_GA4_ID`, `VITE_CLARITY_ID`, and/o
 `VITE_GSC_VERIFICATION` in Cloudflare Pages build environment variables, then
 rebuild. See `.env.example`. Empty values emit no corresponding tags or external
 scripts. No identifiers are included by default. The cleaner is masked from
-Clarity recordings. Pro notification requests open the visitor's email app;
-there is no backend or website email database.
+Clarity recordings. Pro requests are positioned as previews and notifications
+open the visitor's email app; there is no backend or website email database.
+
+## Static i18n framework
+
+Locales are declared in `content/locales.json` as a list of records
+`{code, name, enabled, indexable, htmlLang}`:
+
+- `code` is a lowercase url-safe identifier. `en` is the default locale and the
+  only one required; when enabled alone it is served at the root and all URLs
+  stay unchanged. Currently only `en` is enabled.
+- `htmlLang` is the value used for `<html lang>` and for `hreflang` attributes.
+- `indexable: false` marks the whole locale as not ready for search engines:
+  its pages get `<meta name="robots" content="noindex">` and are excluded from
+  the sitemap and from hreflang alternate groups. A disabled locale is skipped
+  entirely at build time, and its content is never generated or shipped.
+
+English page files stay in `content/pages/<slug>.json` (`home.json` for `/`).
+Any other enabled locale builds from a full independent copy set under
+`content/locales/<code>/` using the same record shape. Translations are never
+derived from or merged back into English at build time: a non-en page without
+its own file under `content/locales/<code>/` is simply not generated for that
+locale, and English content is never used as a fallback for it.
+
+Build-time behavior driven by the config:
+
+- Pages of a non-en enabled locale are written to `/<code>/<slug>/` (the locale
+  home page is `/<code>/`) and get `<html lang>` plus a canonical URL for that
+  path. Vite picks up the extra HTML inputs from the same page catalog.
+- The header language switcher (`nav.lang-switcher`) is rendered only when more
+  than one locale is enabled; each entry links to the same page in another
+  locale (falling back to that locale's home page) and the current locale is
+  marked with `aria-current="true"`. Navigation, guide and footer links point at
+  the same-locale page when it exists, otherwise at the English page.
+- `hreflang` alternate `<link rel="alternate">` tags (including
+  `hreflang="x-default"` pointing at the English page) are emitted only for
+  pages that exist in two or more indexable enabled locales. A page that exists
+  in a single locale gets no alternates at all — with only `en` enabled the
+  built output therefore contains none.
+- `public/sitemap.xml` lists every page of every enabled, indexable locale and
+  adds `xhtml:link rel="alternate" hreflang=...` entries (including
+  `x-default`) to the `<url>` records of pages that exist in multiple such
+  locales.
+
+Content policy for any new locale: copies must keep the established product
+positioning — the tool cleans formatting artifacts and helps the user review
+any writing pattern themselves so the result sounds natural. New or translated
+copy must never claim to trick, evade, or defeat plagiarism or writing-pattern
+checks, and must not promise full watermark removal.
+
+`scripts/i18n.test.ts` covers config validation, the one-locale switcher
+behavior, and per-locale page generation, hreflang, noindex and sitemap output
+using a temporary fixture directory; no second locale exists in real content.
