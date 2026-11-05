@@ -1,0 +1,29 @@
+{
+  "slug": "",
+  "title": "AI Text Cleaner | NoAITell",
+  "h1": "AI Text Cleaner",
+  "description": "Remove AI tells, make text sound natural. Review writing patterns and clean formatting locally, with your meaning under your control.",
+  "body": "<section><h2>How it works</h2><ol class=\"steps\"><li><strong>Paste your draft.</strong> Check up to 500 words in your browser.</li><li><strong>Review the tells.</strong> Inspect findings and choose cleanup options.</li><li><strong>Clean and compare.</strong> Apply formatting fixes, review the diff, and copy your result.</li></ol></section><section><h2>Common AI tells</h2><ul><li><strong>Em dashes:</strong> repeated interruptions can make prose feel formulaic. Review punctuation in context.</li><li><strong>Scaffold openers:</strong> “It is important to note” can often be cut to reach the point sooner.</li><li><strong>Invisible characters:</strong> copy artifacts can interrupt text. Inspect and clean unwanted characters locally.</li></ul><p>These are editing cues, not proof of AI authorship.</p></section><section><h2>Capabilities and limits</h2><p>Remove AI tells, make text sound natural. Paste a draft into the local cleaner, review writing patterns, and choose which formatting changes to apply. Your meaning stays under your control.</p><p>Free: 3 cleanings per day on this device, up to 500 words each. No login. Scanning and reviewing are free; a cleaning counts when you request a result. Your text is processed in your browser and is never uploaded.</p><p><strong>What this tool can do:</strong> clean invisible copy artifacts, Markdown residue, excessive whitespace and known tracking parameters. It highlights formulaic expressions for human review. Punctuation alone does not identify an author.</p><p><strong>What it cannot do:</strong> verify or remove statistical vendor watermarks. Major vendors encode these through word choice, not hidden characters. Heavy rewriting can disrupt these signals, but character cleaning cannot. This app does not perform heavy rewriting.</p><p>Among the vendor systems covered here, Microsoft Windows AI text APIs are the character-based exception: <a href=\"https://learn.microsoft.com/en-us/windows/ai/apis/text-watermarking\">Microsoft documents</a> the sequence U+200B U+034F U+2060 U+200B. <a href=\"https://openai.com/index/eu-text-provenance/\">OpenAI textGrain</a>, <a href=\"https://anthropic.com/news/claude-text-watermark\">Claude watermarking</a>, <a href=\"https://ai.google.dev/responsible/docs/safeguards/synthid\">SynthID Text</a> and <a href=\"https://docs.x.ai/developers/advanced-api-usage/watermarking\">Grok API watermarking</a> use statistical signals.</p><p>Start with a small sample, inspect the highlighted findings, then open Cleanup options. Keep Markdown if you are publishing to a Markdown editor. Review the changes before copying your result. A clean result means no issues were found by the selected rules; it is not evidence of human authorship.</p><section id=\"contact\"><h2>Contact</h2><p>Questions or feedback? Email <a href=\"mailto:noaitell@knowhy.net\">noaitell@knowhy.net</a>.</p></section></section>",
+  "tool": true,
+  "introExample": "<div class=\"intro-example\"><div><strong>Before</strong><p><del>It is important to note that</del> the plan works <del>—</del> for everyone.</p></div><div><strong>After a manual rewrite</strong><p>The plan works for everyone.</p></div><small><em>Spot the pattern, then choose your words.</em> The cleaner flags phrases for review; it does not paraphrase.</small></div>",
+  "faqs": [
+    {
+      "question": "Is my text uploaded?",
+      "answer": "No. Text is processed in your browser and is not uploaded. The free quota stores only a date and use count in localStorage."
+    },
+    {
+      "question": "What can I clean for free?",
+      "answer": "You get 3 cleanings per day on this device, up to 500 words each, with no sign-up. Scanning and reviewing do not use the allowance."
+    },
+    {
+      "question": "Does the cleaner rewrite my draft or remove statistical watermarks?",
+      "answer": "No. It cleans selected formatting and character artifacts and flags writing patterns for your review. It does not paraphrase, verify authorship, or remove statistical vendor watermarks."
+    }
+  ],
+  "pricingCard": "<section class=\"pricing-card\"><h2>Start with the free plan</h2><p>3 uses a day · 500 words per use · No sign-up</p><p>Upcoming Pro: day $4.99 / month $19.9 / year $199. Pro is a preview; payments are not yet accepted.</p><a href=\"/pricing/\">Explore pricing and Pro launch notifications →</a></section>",
+  "toolCopy": {
+    "cleanLabel": "Clean text",
+    "trustLine": "Processed in your browser · Not uploaded · 3 free uses a day · No sign-up"
+  },
+  "heroTitle": "AI Text<br><em>Cleaner</em>"
+}

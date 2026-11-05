@@ -162,10 +162,11 @@ it('closes the mobile drawer when locating a finding', async () => {
   expect(app.editor.selection[0]).toBeGreaterThanOrEqual(0);
 });
 
-it('keeps the English tool label in the thin top bar', async () => {
+it('uses the shared site brand and a single cleaning CTA', async () => {
   const app = await mount();
-  expect(app.html()).toContain('<span class="page-title">AI Text Cleaner</span>');
-  expect(app.html()).toContain('⌾ Local · No text uploads');
+  expect(app.html()).not.toContain('class="brand"');
+  expect(app.html().match(/class="primary"/g)).toHaveLength(1);
+  expect(app.html()).toContain('Processed in your browser · Not uploaded');
   expect(app.html()).not.toContain('class="intro"');
   expect(app.html()).toContain('class="page-note"');
 });
