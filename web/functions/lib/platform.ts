@@ -6,5 +6,10 @@ export interface Statement {
 export interface Env {
   PAYMENTS_DB?: { prepare(sql: string): Statement };
   WAFFO_STORE_ID?: string;
+  WAFFO_MERCHANT_ID?: string;
+  WAFFO_PRIVATE_KEY?: string;
+  WAFFO_PRODUCT_MONTHLY?: string;
+  WAFFO_PRODUCT_DAY?: string;
+  WAFFO_PRODUCT_YEARLY?: string;
 }
 export interface Context { request: Request; env: Env }
