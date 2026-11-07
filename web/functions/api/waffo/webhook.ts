@@ -7,9 +7,9 @@ export async function onRequest({ request, env }: Context): Promise<Response> {
   const body = await request.text(); // Exact signed bytes; never request.json().
   let event: PaymentEvent;
   try {
-    event = verifyWebhook(body, request.headers.get('x-waffo-signature'), { environment: 'test' });
+    event = verifyWebhook(body, request.headers.get('x-waffo-signature'), { environment: 'prod' });
   } catch { return new Response('Invalid signature', { status: 401 }); }
-  if (event.mode !== 'test' || !env.WAFFO_STORE_ID || event.storeId !== env.WAFFO_STORE_ID) {
+  if (event.mode !== 'prod' || !env.WAFFO_STORE_ID || event.storeId !== env.WAFFO_STORE_ID) {
     return new Response('Unexpected store or environment', { status: 403 });
   }
   let projection: ReturnType<typeof project>;

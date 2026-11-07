@@ -23,7 +23,7 @@ export function createClient(env?: EnvMap) {
   return new WaffoPancake({
     merchantId,
     privateKey,
-    environment: 'test',
+    environment: 'prod',
   });
 }
 

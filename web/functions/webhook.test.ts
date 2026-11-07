@@ -6,7 +6,7 @@ const { verify } = vi.hoisted(() => ({ verify: vi.fn() }));
 vi.mock('@waffo/pancake-ts', () => ({ verifyWebhook: verify }));
 afterEach(() => vi.clearAllMocks());
 const event: PaymentEvent = {
-  id: 'delivery-1', mode: 'test', storeId: 'existing-store', timestamp: '2026-11-07T00:00:00Z',
+  id: 'delivery-1', mode: 'prod', storeId: 'existing-store', timestamp: '2026-11-07T00:00:00Z',
   eventType: 'subscription.activated', data: { orderId: 'order-1', buyerEmail: 'buyer@example.com',
     productName: 'NoAITell Pro Monthly', currentPeriodStart: '2026-11-07T00:00:00Z', currentPeriodEnd: '2026-12-07T00:00:00Z' },
 };
@@ -18,16 +18,16 @@ function context() {
     method: 'POST', body: '{  "raw": true }\n', headers: { 'x-waffo-signature': 'test-header' },
   }), env: { WAFFO_STORE_ID: 'existing-store', PAYMENTS_DB: { prepare } }, run, bind, prepare };
 }
-it('passes the exact raw body and explicit test environment to the SDK and durably records the delivery', async () => {
+it('passes the exact raw body and explicit production environment to the SDK and durably records the delivery', async () => {
   verify.mockReturnValue(event);
   const ctx = context();
   expect((await onRequest(ctx)).status).toBe(200);
-  expect(verify).toHaveBeenCalledWith('{  "raw": true }\n', 'test-header', { environment: 'test' });
+  expect(verify).toHaveBeenCalledWith('{  "raw": true }\n', 'test-header', { environment: 'prod' });
   expect(ctx.bind).toHaveBeenCalledWith('delivery-1', 'subscription.activated', 'order-1', 'buyer@example.com',
     'monthly', 'active', '2026-11-07T00:00:00.000Z', '2026-12-07T00:00:00.000Z', Date.parse(event.timestamp), 1);
   expect(ctx.run).toHaveBeenCalledOnce();
 });
-it.each([{ ...event, mode: 'prod' }, { ...event, storeId: 'other-store' }])('rejects unexpected store or mode before persistence', async payload => {
+it.each([{ ...event, mode: 'test' }, { ...event, storeId: 'other-store' }])('rejects unexpected store or mode before persistence', async payload => {
   verify.mockReturnValue(payload);
   const ctx = context();
   expect((await onRequest(ctx)).status).toBe(403);
