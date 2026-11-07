@@ -1,3 +1,13 @@
 name = "noaitell"
 pages_build_output_dir = "dist"
 compatibility_date = "2026-11-04"
+compatibility_flags = ["nodejs_compat"]
+
+# Stay on Workers/Pages Free. Bind PAYMENTS_DB in the Pages dashboard to a
+# free-tier D1 database and apply migrations/0001_payments.sql before deploying.
+# Alternatively uncomment after replacing the database ID (never use a fake ID):
+# [[d1_databases]]
+# binding = "PAYMENTS_DB"
+# database_name = "noaitell-payments-test"
+# database_id = "<your-free-d1-database-id>"
+# migrations_dir = "migrations"

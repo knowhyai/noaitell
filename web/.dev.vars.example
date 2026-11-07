@@ -1,0 +1,7 @@
+WAFFO_MERCHANT_ID="<existing-merchant-id>"
+WAFFO_PRIVATE_KEY="<test-private-key-configured-outside-the-repository>"
+WAFFO_STORE_ID="<existing-store-id>"
+WAFFO_PRODUCT_MONTHLY="<complete-existing-monthly-product-id>"
+# Leave unset until the corresponding dashboard products exist.
+# WAFFO_PRODUCT_DAY="<day-pass-product-id>"
+# WAFFO_PRODUCT_YEARLY="<yearly-product-id>"
