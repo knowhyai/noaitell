@@ -3,6 +3,12 @@ pages_build_output_dir = "dist"
 compatibility_date = "2026-11-04"
 compatibility_flags = ["nodejs_compat"]
 
+[vars]
+WAFFO_MERCHANT_ID = "MER_4Ol0Zkff9a43WmPKgp3ae6"
+WAFFO_STORE_ID = "STO_4ZCSNbjIGj2BxBFxKNwJGE"
+WAFFO_PRODUCT_MONTHLY = "PROD_6DtfrSJZalRGWPxIwDXi6j"
+WAFFO_PRODUCT_DAY = "PROD_591e3TvzJBAPVSkKzoLqgn"
+
 # Stay on Workers/Pages Free. Database ID is not a secret.
 [[d1_databases]]
 binding = "PAYMENTS_DB"
