@@ -1,3 +1,4 @@
+import { loadIntegrationEnv, newsletterHref } from './analytics.mjs';
 import { readdirSync, readFileSync, mkdirSync, writeFileSync, existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { resolve } from 'node:path';
@@ -122,13 +123,45 @@ function localeLink(pages, p, slug) {
   return escapeHref(pathFor(sameLocale ?? enPage ?? { locale: p.locale ?? 'en', slug }));
 }
 const escapeHref = href => esc(href);
+// Live Knowhy properties only (checked 2026-11-10). Vault is a private 401 and is omitted.
+const NETWORK = [
+  ['https://knowhy.net/', 'KNOWHY'],
+  ['https://lab.knowhy.net/', 'Lab'],
+  ['https://news.knowhy.net/', 'News'],
+  ['https://models.knowhy.net/', 'Models'],
+  ['https://design.knowhy.net/', 'Design'],
+  ['https://scope.knowhy.net/', 'Scope'],
+  ['https://apps.knowhy.net/', 'Apps'],
+  ['https://game.knowhy.net/', 'Games'],
+  ['https://reset.knowhy.net/', 'Reset'],
+  ['https://noaitell.com/', 'NoAITell'],
+];
+const networkItems = () => NETWORK.map(([href, name]) => `<li><a href="${esc(href)}"${href.startsWith('https://noaitell.com') ? ' aria-current="page"' : ''}>${esc(name)}</a></li>`).join('');
+const BRAND_MARK = '<svg width="24" height="28" viewBox="0 0 24 28" fill="none" aria-hidden="true"><path d="M4 24L9 5L16 2L21 8L13 24L4 26Z" stroke="currentColor" stroke-width="1.6"/><path d="M5 24L13 15M9 5L18 10" stroke="currentColor" stroke-width="1.6"/><circle cx="13" cy="15" r="2" fill="currentColor"/></svg>';
+function renderStructuredData(p) {
+  const pageUrl = BASE_URL + pathFor(p);
+  const website = { '@type': 'WebSite', '@id': `${BASE_URL}/#website`, name: 'NoAITell', url: `${BASE_URL}/` };
+  const org = { '@type': 'Organization', '@id': 'https://knowhy.net/#organization', name: 'KNOWHY', url: 'https://knowhy.net/', email: 'noaitell@knowhy.net' };
+  website.publisher = { '@id': org['@id'] };
+  const node = p.tool
+    ? { '@type': 'WebApplication', name: p.h1, description: p.description, url: pageUrl, applicationCategory: 'UtilitiesApplication', operatingSystem: 'Web', offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' }, isPartOf: { '@id': website['@id'] } }
+    : { '@type': 'WebPage', name: p.h1, description: p.description, url: pageUrl, isPartOf: { '@id': website['@id'] } };
+  return `<script type="application/ld+json">${JSON.stringify({ '@context': 'https://schema.org', '@graph': [org, website, node] }).replace(/</g, '\\u003c')}</script>`;
+}
 export function renderPage(p, pages = modulePages, locales = moduleLocales) {
  const htmlLang = esc(p.localeConf?.htmlLang ?? 'en');
  const noindex = p.localeConf?.indexable === false ? '<meta name="robots" content="noindex">' : '';
  const alternates = alternatesFor(p, localeGroups(pages, locales)).map(a => `<link rel="alternate" hreflang="${esc(a.hreflang)}" href="${esc(a.href)}">`).join('');
  const switcher = renderLangSwitcher(p, locales, pages);
  const links = pages.filter(q => (q.locale ?? 'en') === (p.locale ?? 'en') && q !== p).map(q => `<li><a href="${escapeHref(pathFor(q))}">${esc(q.h1)}</a></li>`).join('');
- return `<!doctype html><html lang="${htmlLang}"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>${esc(p.title)}</title><meta name="description" content="${esc(p.description)}"><meta property="og:title" content="${esc(p.title)}"><meta property="og:description" content="${esc(p.description)}"><meta property="og:url" content="${esc(BASE_URL)}${escapeHref(pathFor(p))}"><meta property="og:type" content="website"><meta name="twitter:card" content="summary"><!-- GSC verification is injected when VITE_GSC_VERIFICATION is configured. --><link rel="canonical" href="${esc(BASE_URL)}${escapeHref(pathFor(p))}">${noindex}${alternates}<link rel="icon" href="/favicon.svg"><link rel="stylesheet" href="/src/style.css"></head><body><nav class="site-nav" aria-label="Main"><a class="brand" href="/"><svg viewBox="0 0 24 28" fill="none" aria-hidden="true"><path d="M4 24L9 5L16 2L21 8L13 24L4 26Z" stroke="currentColor" stroke-width="1.6"/><path d="M5 24L13 15M9 5L18 10" stroke="currentColor" stroke-width="1.6"/><circle cx="13" cy="15" r="2" fill="currentColor"/></svg> NoAITell</a><a href="${localeLink(pages, p, 'pricing')}">Pricing</a><a href="${localeLink(pages, p, 'privacy')}">Privacy</a></nav>${switcher}<section class="page-intro"><h1${p.heroTitle ? ' class="hero-title"' : ''}>${p.heroTitle ?? esc(p.h1)}</h1><p>${esc(p.description)}</p>${p.introExample ?? ''}</section>${p.tool?`<div id="app" data-clarity-mask="true"><main><h2>Check and clean your text</h2><p>Your text stays on this device. Free: 3 uses/day, 500 words per use.</p><label for="static-editor">Source text</label><textarea id="static-editor" placeholder="Paste or type text to check locally…"></textarea><button class="primary" disabled>${esc(p.toolCopy?.cleanLabel ?? '')}</button><p class="trust-line">${esc(p.toolCopy?.trustLine ?? '')}</p><noscript><p>Enable JavaScript to inspect and clean text locally.</p></noscript></main></div>`:''}<article class="page-content">${p.body}${renderFAQs(p)}${p.pricingCard ?? ''}</article><nav class="page-content" aria-label="Related guides"><h2>Explore NoAITell</h2><ul class="guide-links">${links}</ul></nav><footer class="page-content"><a href="${localeLink(pages, p, 'privacy')}">Privacy</a> · <a href="${localeLink(pages, p, 'terms')}">Terms</a> · <a href="${localeLink(pages, p, 'refund')}">Refund policy</a> · <a href="mailto:noaitell@knowhy.net">noaitell@knowhy.net</a></footer><script type="module" src="/src/site.ts"></script>${p.tool?'<script type="module" src="/src/main.ts"></script>':''}</body></html>`;
+ const pricing = localeLink(pages, p, 'pricing');
+ const privacy = localeLink(pages, p, 'privacy');
+ const net = networkItems();
+ const imageAlt = esc(p.h1);
+ const pageUrl = `${esc(BASE_URL)}${escapeHref(pathFor(p))}`;
+ const newsletter = newsletterHref(loadIntegrationEnv(root));
+ const newsletterLink = newsletter ? ` · <a href="${esc(newsletter)}">Newsletter</a>` : '';
+ return `<!doctype html><html lang="${htmlLang}"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>${esc(p.title)}</title><meta name="description" content="${esc(p.description)}"><meta property="og:title" content="${esc(p.title)}"><meta property="og:description" content="${esc(p.description)}"><meta property="og:url" content="${pageUrl}"><meta property="og:type" content="website"><meta property="og:image" content="${esc(BASE_URL)}/og.png"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta property="og:image:alt" content="${imageAlt}"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="${esc(p.title)}"><meta name="twitter:description" content="${esc(p.description)}"><meta name="twitter:image" content="${esc(BASE_URL)}/og.png"><meta name="twitter:image:alt" content="${imageAlt}"><!-- Verification and analytics tags are injected at build time when configured. --><link rel="canonical" href="${pageUrl}">${noindex}${alternates}<link rel="icon" href="/favicon.svg"><link rel="manifest" href="/site.webmanifest"><link rel="stylesheet" href="/src/style.css"></head><body><header class="site-header"><nav class="site-nav" aria-label="Main"><a class="brand" href="/">${BRAND_MARK}<span class="brand-knowhy">KNOWHY</span><span class="brand-product">NoAITell</span></a><div class="site-links"><a href="${pricing}">Pricing</a><a href="${privacy}">Privacy</a></div><div class="site-tools"><a class="knowhy-home" href="https://knowhy.net/">knowhy.net</a><details class="net-switch"><summary>Network</summary><ul class="network-list">${net}</ul></details><details class="nav-menu"><summary>Menu</summary><div class="nav-menu-panel"><a href="${pricing}">Pricing</a><a href="${privacy}">Privacy</a><a href="https://knowhy.net/">knowhy.net</a><ul class="network-list">${net}</ul></div></details></div></nav></header>${switcher}<main id="content"><section class="page-intro"><h1${p.heroTitle ? ' class="hero-title"' : ''}>${p.heroTitle ?? esc(p.h1)}</h1><p>${esc(p.description)}</p>${p.introExample ?? ''}</section>${p.tool?`<div id="app" data-clarity-mask="true"><div class="tool-fallback"><h2>Check and clean your text</h2><p>Your text stays on this device. Free: 3 uses/day, 500 words per use.</p><label for="static-editor">Source text</label><textarea id="static-editor" placeholder="Paste or type text to check locally…"></textarea><button class="primary" type="button" disabled>${esc(p.toolCopy?.cleanLabel ?? '')}</button><p class="trust-line">${esc(p.toolCopy?.trustLine ?? '')}</p><noscript><p>Enable JavaScript to inspect and clean text locally.</p></noscript></div></div>`:''}<article class="page-content">${p.body}${renderFAQs(p)}${p.pricingCard ?? ''}</article><nav class="page-content" aria-label="Related guides"><h2>Explore NoAITell</h2><ul class="guide-links">${links}</ul></nav></main><footer class="page-content site-footer"><nav class="network-nav" aria-label="KNOWHY network"><ul class="network-list">${net}</ul></nav><p class="footer-meta"><a href="${privacy}">Privacy</a> · <a href="${localeLink(pages, p, 'terms')}">Terms</a> · <a href="${localeLink(pages, p, 'refund')}">Refund policy</a> · <a href="mailto:noaitell@knowhy.net">noaitell@knowhy.net</a>${newsletterLink}</p><p class="footer-domain">noaitell.com</p></footer>${renderStructuredData(p)}<script type="module" src="/src/site.ts"></script>${p.tool?'<script type="module" src="/src/main.ts"></script>':''}</body></html>`;
 }
 export function generatePages(targetRoot = root) {
   const locales = enabledLocales(loadLocales(targetRoot));
