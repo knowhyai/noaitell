@@ -31,12 +31,23 @@ per cleaning. Only the date and count are stored in localStorage; drafts are not
 Scanning does not spend an allowance. Pro checkout is disabled. No account, webhook,
 D1 database, payment credentials, or text upload endpoint is included.
 
-Optional measurement (static build): set `VITE_GA4_ID`, `VITE_CLARITY_ID`, and/or
-`VITE_GSC_VERIFICATION` in Cloudflare Pages build environment variables, then
-rebuild. See `.env.example`. Empty values emit no corresponding tags or external
-scripts. No identifiers are included by default. The cleaner is masked from
-Clarity recordings. Pro requests are positioned as previews and notifications
-open the visitor's email app; there is no backend or website email database.
+Optional measurement and verification (static build). Nothing is connected by
+default. Set any of these in `.env` or in the Cloudflare Pages build environment,
+then rebuild. Empty or invalid values emit no tag, script, or link.
+
+| Key | When set |
+| --- | --- |
+| `VITE_GSC_VERIFICATION` | `<meta name="google-site-verification">` |
+| `VITE_BING_VERIFICATION` | `<meta name="msvalidate.01">` |
+| `VITE_GA4_ID` | GA4 loader, only for an id shaped like `G-XXXXXXXX` |
+| `VITE_CLARITY_ID` | Clarity loader. The cleaner stays masked from recordings. |
+| `VITE_NEWSLETTER_URL` | An https Newsletter link in the footer. Omitted when unset. |
+
+`npm run check:integrations` prints configured, missing, or invalid for each key
+and always exits 0, including when it runs during `npm run build`. It does not
+print the values. No identifiers are included by default. Pro requests are
+positioned as previews and notifications open the visitor's email app; there is
+no backend or website email database.
 
 ## Static i18n framework
 

@@ -5,9 +5,10 @@
   "type": "module",
   "scripts": {
     "dev": "node scripts/pages.mjs && vite",
-    "build": "node scripts/pages.mjs && tsc --noEmit && npm run check:functions && vite build",
+    "build": "node scripts/pages.mjs && tsc --noEmit && npm run check:functions && npm run check:integrations && vite build",
     "test": "vitest run",
-    "check:functions": "tsc -p tsconfig.functions.json"
+    "check:functions": "tsc -p tsconfig.functions.json",
+    "check:integrations": "node scripts/check-integrations.mjs"
   },
   "devDependencies": {
     "typescript": "^5.7.2",
